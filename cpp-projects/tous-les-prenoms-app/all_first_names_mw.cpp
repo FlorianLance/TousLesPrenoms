@@ -145,32 +145,22 @@ void AllFirstNamesMW::init_ui_filters(){
 void AllFirstNamesMW::init_ui_colors(){
 
     // dialogs
-    femaleCol1D.setCurrentColor(settings.display.femaleCol1);
-    femaleCol2D.setCurrentColor(settings.display.femaleCol2);
-    maleCol1D.setCurrentColor(settings.display.maleCol1);
-    maleCol2D.setCurrentColor(settings.display.maleCol2);
-    bothCol1D.setCurrentColor(settings.display.bothCol1);
-    bothCol2D.setCurrentColor(settings.display.bothCol2);
-    otherCol1D.setCurrentColor(settings.display.otherCol1);
-    otherCol2D.setCurrentColor(settings.display.otherCol2);
-    femaleCol1D.setOptions(QColorDialog::NoButtons);
-    femaleCol2D.setOptions(QColorDialog::NoButtons);
-    maleCol1D.setOptions(QColorDialog::NoButtons);
-    maleCol2D.setOptions(QColorDialog::NoButtons);
-    bothCol1D.setOptions(QColorDialog::NoButtons);
-    bothCol2D.setOptions(QColorDialog::NoButtons);
-    otherCol1D.setOptions(QColorDialog::NoButtons);
-    otherCol2D.setOptions(QColorDialog::NoButtons);
 
-    // buttons
-    UiUtility::fill_button_icon(ui.pbFemaleColor1, settings.display.femaleCol1);
-    UiUtility::fill_button_icon(ui.pbFemaleColor2, settings.display.femaleCol2);
-    UiUtility::fill_button_icon(ui.pbMaleColor1,   settings.display.maleCol1);
-    UiUtility::fill_button_icon(ui.pbMaleColor2,   settings.display.maleCol2);
-    UiUtility::fill_button_icon(ui.pbBothColor1,   settings.display.bothCol1);
-    UiUtility::fill_button_icon(ui.pbBothColor2,   settings.display.bothCol2);
-    UiUtility::fill_button_icon(ui.pbOtherColor1,  settings.display.otherCol1);
-    UiUtility::fill_button_icon(ui.pbOtherColor2,  settings.display.otherCol2);
+//    const auto &d = settings.display;
+//    std::vector<std::tuple<GenderRepartition, QColor, QColor, QPushButton*, QPushButton*>> gendersRep = {
+//        {GenderRepartition::OnlyFemale,      d.onlyFemaleName,  d.onlyFemaleBackground,     ui.pbTotalFemaleColorName, ui.pbTotalFemaleColorBackground},
+//        {GenderRepartition::OnlyMale,        d.onlyMaleName,    d.onlyMaleBackground,       ui.pbTotalMaleColorName, ui.pbTotalMaleColorBackground},
+//        {GenderRepartition::OnlyOther,       d.onlyOtherName,   d.onlyOtherBackground,      ui.pbTotalOtherColorName, ui.pbTotalOtherColorBackground},
+//        {GenderRepartition::MostlyFemale,    d.mostlyFemaleName,d.mostlyFemaleBackground,   ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GenderRepartition::MostlyMale,      d.mostlyMaleName,  d.mostlyMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GenderRepartition::MostlyOther,     d.mostlyOtherName, d.mostlyOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GenderRepartition::FemaleMale,      d.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GenderRepartition::FemaleOther,     d.femaleOtherName, d.femaleOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GenderRepartition::MaleOther,       d.maleOtherName,   d.maleOtherBackground,      ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GenderRepartition::FemaleMaleOther, d.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
+//    };
+//    colorsGendersD[GenderRepartition::MostlyFemale] = std::make_unique<QColorDialog>();
+
 }
 
 void AllFirstNamesMW::init_ui_curves(){
@@ -398,55 +388,55 @@ void AllFirstNamesMW::init_connections(){
 
 void AllFirstNamesMW::init_connections_colors(){
 
-    // buttons
-    connect(ui.pbFemaleColor1, &QPushButton::clicked, &femaleCol1D, &QColorDialog::show);
-    connect(ui.pbFemaleColor2, &QPushButton::clicked, &femaleCol2D, &QColorDialog::show);
-    connect(ui.pbMaleColor1,   &QPushButton::clicked, &maleCol1D,   &QColorDialog::show);
-    connect(ui.pbMaleColor2,   &QPushButton::clicked, &maleCol2D,   &QColorDialog::show);
-    connect(ui.pbBothColor1,   &QPushButton::clicked, &bothCol1D,   &QColorDialog::show);
-    connect(ui.pbBothColor2,   &QPushButton::clicked, &bothCol2D,   &QColorDialog::show);
-    connect(ui.pbOtherColor1,  &QPushButton::clicked, &otherCol1D,  &QColorDialog::show);
-    connect(ui.pbOtherColor2,  &QPushButton::clicked, &otherCol2D,  &QColorDialog::show);
+//    // buttons
+//    connect(ui.pbFemaleColor1, &QPushButton::clicked, &femaleCol1D, &QColorDialog::show);
+//    connect(ui.pbFemaleColor2, &QPushButton::clicked, &femaleCol2D, &QColorDialog::show);
+//    connect(ui.pbMaleColor1,   &QPushButton::clicked, &maleCol1D,   &QColorDialog::show);
+//    connect(ui.pbMaleColor2,   &QPushButton::clicked, &maleCol2D,   &QColorDialog::show);
+//    connect(ui.pbBothColor1,   &QPushButton::clicked, &bothCol1D,   &QColorDialog::show);
+//    connect(ui.pbBothColor2,   &QPushButton::clicked, &bothCol2D,   &QColorDialog::show);
+//    connect(ui.pbOtherColor1,  &QPushButton::clicked, &otherCol1D,  &QColorDialog::show);
+//    connect(ui.pbOtherColor2,  &QPushButton::clicked, &otherCol2D,  &QColorDialog::show);
 
-    // dialogs
-    connect(&femaleCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbFemaleColor1, settings.display.femaleCol1=c);
-//        update_displayed_info();
-    });
-    connect(&femaleCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbFemaleColor2, settings.display.femaleCol2=c);
-//        update_displayed_info();
-    });
+//    // dialogs
+//    connect(&femaleCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbFemaleColor1, settings.display.femaleCol1=c);
+////        update_displayed_info();
+//    });
+//    connect(&femaleCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbFemaleColor2, settings.display.femaleCol2=c);
+////        update_displayed_info();
+//    });
 
-    connect(&maleCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbMaleColor1, settings.display.maleCol1 = c);
-//        update_displayed_info();
-    });
+//    connect(&maleCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbMaleColor1, settings.display.maleCol1 = c);
+////        update_displayed_info();
+//    });
 
-    connect(&maleCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbMaleColor2, settings.display.maleCol2 = c);
-//        update_displayed_info();
-    });
+//    connect(&maleCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbMaleColor2, settings.display.maleCol2 = c);
+////        update_displayed_info();
+//    });
 
-    connect(&bothCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbBothColor1, settings.display.bothCol1 = c);
-//        update_displayed_info();
-    });
+//    connect(&bothCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbBothColor1, settings.display.bothCol1 = c);
+////        update_displayed_info();
+//    });
 
-    connect(&bothCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbBothColor2, settings.display.bothCol2 = c);
-//        update_displayed_info();
-    });
+//    connect(&bothCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbBothColor2, settings.display.bothCol2 = c);
+////        update_displayed_info();
+//    });
 
-    connect(&otherCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbOtherColor1, settings.display.otherCol1 = c);
-//        update_displayed_info();
-    });
+//    connect(&otherCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbOtherColor1, settings.display.otherCol1 = c);
+////        update_displayed_info();
+//    });
 
-    connect(&otherCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-        UiUtility::fill_button_icon(ui.pbOtherColor2, settings.display.otherCol2 = c);
-//        update_displayed_info();
-    });
+//    connect(&otherCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
+//        UiUtility::fill_button_icon(ui.pbOtherColor2, settings.display.otherCol2 = c);
+////        update_displayed_info();
+//    });
 }
 
 
@@ -1095,8 +1085,8 @@ void AllFirstNamesMW::update_displayed_info(){
         return;
     }
 
-    auto c1 = settings.display.bothCol1;
-    auto c2 = settings.display.bothCol2;
+    QColor c1 = Qt::black;//settings.display.bothCol1;
+    QColor c2 = Qt::black;//settings.display.bothCol2;
 
     ui.laFirstName->setStyleSheet(QSL("QLabel[objectName^=\"laFirstName\"] { color:rgb(")
         % QString::number(c2.red()) % "," % QString::number(c2.green()) % "," % QString::number(c2.blue()) % QSL("); }"));

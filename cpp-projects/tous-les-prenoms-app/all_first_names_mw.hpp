@@ -31,7 +31,7 @@
 #include "worker/list_worker.hpp"
 
 // generated ui
-#include "ui_mainwindow.h"
+#include "ui_all_first_names.h"
 
 
 namespace tool {
@@ -113,19 +113,20 @@ public:
 
     // ui
     // # widgets
-    Ui::MainWindowW ui;
+    Ui::AllFirstNameW ui;
     MapW *mapW = nullptr;
     QListView *filteredNamesV = nullptr;
     ui::ListNamesM filteredNamesM;
     // # forms
-    QColorDialog femaleCol1D;
-    QColorDialog femaleCol2D;
-    QColorDialog maleCol1D;
-    QColorDialog maleCol2D;
-    QColorDialog bothCol1D;
-    QColorDialog bothCol2D;
-    QColorDialog otherCol1D;
-    QColorDialog otherCol2D;
+    std::unordered_map<GenderRepartition, std::unique_ptr<QColorDialog>> colorsGendersD;
+//    QColorDialog femaleCol1D;
+//    QColorDialog femaleCol2D;
+//    QColorDialog maleCol1D;
+//    QColorDialog maleCol2D;
+//    QColorDialog bothCol1D;
+//    QColorDialog bothCol2D;
+//    QColorDialog otherCol1D;
+//    QColorDialog otherCol2D;
 
     QButtonGroup sortGroup;
     // # curves

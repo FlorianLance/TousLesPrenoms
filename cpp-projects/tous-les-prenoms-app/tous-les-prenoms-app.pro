@@ -124,7 +124,7 @@ DISTFILES += \
   
 
 FORMS += \
-    mainwindow.ui
+    all_first_names.ui
 
 RESOURCES += \
     icons.qrc
