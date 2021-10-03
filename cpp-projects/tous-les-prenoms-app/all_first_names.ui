@@ -626,7 +626,7 @@
               </item>
               <item row="1" column="2" rowspan="2" colspan="2">
                <widget class="QWidget" name="wSubYear" native="true">
-                <layout class="QVBoxLayout" name="verticalLayout_8">
+                <layout class="QGridLayout" name="gridLayout_7">
                  <property name="leftMargin">
                   <number>0</number>
                  </property>
@@ -639,122 +639,78 @@
                  <property name="bottomMargin">
                   <number>0</number>
                  </property>
-                 <item>
-                  <widget class="QWidget" name="wAppears" native="true">
-                   <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,2,1">
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QCheckBox" name="cbAppearsYear">
-                      <property name="text">
-                       <string>première apparition:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="cbOpeAppearsYear">
-                      <item>
-                       <property name="text">
-                        <string>avant</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>durant</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>après</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>inconnu</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="sbAppearsYear">
-                      <property name="minimum">
-                       <number>1900</number>
-                      </property>
-                      <property name="maximum">
-                       <number>2020</number>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
+                 <item row="2" column="0">
+                  <widget class="QCheckBox" name="cbPeakYear">
+                   <property name="text">
+                    <string>pic:</string>
+                   </property>
                   </widget>
                  </item>
-                 <item>
-                  <widget class="QWidget" name="wPeak" native="true">
-                   <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,2,1">
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QCheckBox" name="cbPeakYear">
-                      <property name="text">
-                       <string>pic:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="cbOpePeakYear">
-                      <item>
-                       <property name="text">
-                        <string>avant</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>durant</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>après</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>inconnu</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="sbPeakYear">
-                      <property name="minimum">
-                       <number>1900</number>
-                      </property>
-                      <property name="maximum">
-                       <number>2020</number>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
+                 <item row="0" column="1">
+                  <widget class="QComboBox" name="cbOpeAppearsYear">
+                   <property name="currentIndex">
+                    <number>-1</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QSpinBox" name="sbAppearsYear">
+                   <property name="minimum">
+                    <number>1900</number>
+                   </property>
+                   <property name="maximum">
+                    <number>2020</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QCheckBox" name="cbAppearsYear">
+                   <property name="text">
+                    <string>première apparition:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QComboBox" name="cbOpePeakYear">
+                   <property name="currentIndex">
+                    <number>-1</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="2">
+                  <widget class="QSpinBox" name="sbPeakYear">
+                   <property name="minimum">
+                    <number>1900</number>
+                   </property>
+                   <property name="maximum">
+                    <number>2020</number>
+                   </property>
+                   <property name="value">
+                    <number>1988</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QCheckBox" name="cbLastAppearsYear">
+                   <property name="text">
+                    <string>dernière apparition:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QComboBox" name="cbOpeLastAppearsYear"/>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QSpinBox" name="sbLastAppearsYear">
+                   <property name="minimum">
+                    <number>1900</number>
+                   </property>
+                   <property name="maximum">
+                    <number>2020</number>
+                   </property>
+                   <property name="value">
+                    <number>2020</number>
+                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -1893,7 +1849,7 @@
               <item row="1" column="2">
                <widget class="QLabel" name="label_45">
                 <property name="text">
-                 <string>Année de disparition:</string>
+                 <string>Dernière apparition:</string>
                 </property>
                </widget>
               </item>
@@ -1955,7 +1911,7 @@
               <item row="1" column="0">
                <widget class="QLabel" name="label_43">
                 <property name="text">
-                 <string>Année d'apparition:</string>
+                 <string>Première apparition:</string>
                 </property>
                </widget>
               </item>

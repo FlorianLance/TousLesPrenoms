@@ -273,6 +273,27 @@ bool Filters::is_filtered(const FilterSettings &s, FirstNameV firstNameV, Data &
         return true;
     }
 
+    if(s.filterPopPeriod){
+
+        const auto popularity = data.pData.infosPerName[firstNameV].popularityPerPeriod[static_cast<int>(s.period)];
+
+        if(s.periodAtLeast){
+            if(popularity > s.popPeriod){
+                return true;
+            }
+        }
+        if(s.periodEqual){
+            if(popularity != s.popPeriod){
+                return true;
+            }
+        }
+        if(s.periodAtLast){
+            if(popularity < s.popPeriod){
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 

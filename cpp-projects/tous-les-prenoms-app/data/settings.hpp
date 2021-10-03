@@ -6,8 +6,12 @@
 #include <QString>
 #include <QColor>
 
-namespace tool {
+// local
+#include "gender.hpp"
+#include "period.hpp"
+#include "popularity.hpp"
 
+namespace tool {
 
 struct FilterSettings{
 
@@ -24,7 +28,6 @@ struct FilterSettings{
     QStringList endsByTextes;
     bool doNoContains;
     QStringList doNotContainsTextes;
-
 
     // gender
     bool filterGender;
@@ -46,6 +49,12 @@ struct FilterSettings{
     bool appearsDuring;
     bool appearsUnknow;
     int appearsYear;
+    // # last appears
+    bool lastAppearsBefore;
+    bool lastAppearsAfter;
+    bool lastAppearsDuring;
+    bool lastAppearsUnknow;
+    int lastAppearsYear;
     // # peak
     bool peakBefore;
     bool peakAfter;
@@ -55,6 +64,11 @@ struct FilterSettings{
 
     // period
     bool filterPopPeriod;
+    Period period;
+    bool periodAtLeast;
+    bool periodEqual;
+    bool periodAtLast;
+    Popularity popPeriod;
 
     // departments
     bool filterPopDep;
@@ -68,30 +82,33 @@ struct FilterSettings{
 };
 
 struct DisplaySettings{
+    std::unordered_map<GenderRepartition, QColor> genderRepartitionsForegroundColors ={
+        {GenderRepartition::OnlyFemale,      {141,226,148}},
+        {GenderRepartition::OnlyMale,        {185,177,207}},
+        {GenderRepartition::OnlyOther,       {223,171,140}},
+        {GenderRepartition::MostlyMale,      {185,177,207}},
+        {GenderRepartition::MostlyFemale,    {141,226,148}},
+        {GenderRepartition::MostlyOther,     {223,171,140}},
+        {GenderRepartition::FemaleMale,      {115,187,215}},
+        {GenderRepartition::FemaleOther,     {115,187,215}},
+        {GenderRepartition::MaleOther,       {115,187,215}},
+        {GenderRepartition::FemaleMaleOther, {115,187,215}},
+        {GenderRepartition::Unknow,          {255,255,255}}
+    };
 
-    QColor onlyFemaleName         = {141,226,148};
-    QColor onlyFemaleBackground   = {22,90,28};
-    QColor onlyMaleName           = {185,177,207};
-    QColor onlyMaleBackground     = {69,60,98};
-    QColor onlyOtherName          = {223,171,140};
-    QColor onlyOtherBackground    = {125,68,34};
-
-    QColor mostlyFemaleName       = {141,226,148};
-    QColor mostlyFemaleBackground = {22,90,28};
-    QColor mostlyMaleName         = {185,177,207};
-    QColor mostlyMaleBackground   = {69,60,98};
-    QColor mostlyOtherName        = {223,171,140};
-    QColor mostlyOtherBackground  = {125,68,34};
-
-    QColor femaleMaleName         = {115,187,215};
-    QColor femaleMaleBackground   = {31,85,105};
-    QColor femaleOtherName        = {115,187,215};
-    QColor femaleOtherBackground  = {31,85,105};
-    QColor maleOtherName        = {115,187,215};
-    QColor maleOtherBackground  = {31,85,105};
-
-    QColor femaleMaleOtherName        = {115,187,215};
-    QColor femaleMaleOtherBackground  = {31,85,105};
+    std::unordered_map<GenderRepartition, QColor> genderRepartitionsBackgroundColors ={
+        {GenderRepartition::OnlyFemale,      {22,90,28}},
+        {GenderRepartition::OnlyMale,        {69,60,98}},
+        {GenderRepartition::OnlyOther,       {125,68,34}},
+        {GenderRepartition::MostlyMale,      {69,60,98}},
+        {GenderRepartition::MostlyFemale,    {22,90,28}},
+        {GenderRepartition::MostlyOther,     {125,68,34}},
+        {GenderRepartition::FemaleMale,      {31,85,105}},
+        {GenderRepartition::FemaleOther,     {31,85,105}},
+        {GenderRepartition::MaleOther,       {31,85,105}},
+        {GenderRepartition::FemaleMaleOther, {31,85,105}},
+        {GenderRepartition::Unknow,          {0,0,0}}
+    };
 };
 
 struct Settings{
@@ -109,3 +126,4 @@ struct Settings{
 };
 
 }
+

@@ -113,13 +113,14 @@ void AllFirstNamesMW::init_ui_filters(){
     }
 
     const QStringList opeItems = {
-        "au moins", "au plus", "égale"
+        "au moins", "égale", "au plus"
     };
     ui.cbOpePer->addItems(opeItems);
     ui.cbOpePer->setCurrentIndex(0);
 
     const QStringList popItems = {
-        "Immense", "Très haute", "Haute", "Moyenne", "Basse", "Rare", "Très rare", "Inexistante"
+        "Inexistante", "Très rare", "Rare", "Basse",
+        "Moyenne", "Haute", "Très haute", "Immense"
     };
     ui.cbPopPeriod->addItems(popItems);
     ui.cbPopPeriod->setCurrentIndex(0);
@@ -140,24 +141,38 @@ void AllFirstNamesMW::init_ui_filters(){
     };
     ui.cbPeriod->addItems(perItems);
     ui.cbPeriod->setCurrentIndex(7);
+
+
+    const QStringList yearsOpeItems = {
+        "avant", "durant", "après", "inconnu"
+    };
+    ui.cbOpeAppearsYear->addItems(yearsOpeItems);
+    ui.cbOpeLastAppearsYear->addItems(yearsOpeItems);
+    ui.cbOpePeakYear->addItems(yearsOpeItems);
+
+    ui.cbOpeAppearsYear->setCurrentIndex(2);
+    ui.cbOpeLastAppearsYear->setCurrentIndex(0);
+    ui.cbOpePeakYear->setCurrentIndex(1);
 }
 
 void AllFirstNamesMW::init_ui_colors(){
 
     // dialogs
 
-//    const auto &d = settings.display;
+    const auto &b = settings.display.genderRepartitionsBackgroundColors;
+    const auto &f = settings.display.genderRepartitionsForegroundColors;
+    using GR = GenderRepartition;
 //    std::vector<std::tuple<GenderRepartition, QColor, QColor, QPushButton*, QPushButton*>> gendersRep = {
-//        {GenderRepartition::OnlyFemale,      d.onlyFemaleName,  d.onlyFemaleBackground,     ui.pbTotalFemaleColorName, ui.pbTotalFemaleColorBackground},
-//        {GenderRepartition::OnlyMale,        d.onlyMaleName,    d.onlyMaleBackground,       ui.pbTotalMaleColorName, ui.pbTotalMaleColorBackground},
-//        {GenderRepartition::OnlyOther,       d.onlyOtherName,   d.onlyOtherBackground,      ui.pbTotalOtherColorName, ui.pbTotalOtherColorBackground},
-//        {GenderRepartition::MostlyFemale,    d.mostlyFemaleName,d.mostlyFemaleBackground,   ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GenderRepartition::MostlyMale,      d.mostlyMaleName,  d.mostlyMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GenderRepartition::MostlyOther,     d.mostlyOtherName, d.mostlyOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GenderRepartition::FemaleMale,      d.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GenderRepartition::FemaleOther,     d.femaleOtherName, d.femaleOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GenderRepartition::MaleOther,       d.maleOtherName,   d.maleOtherBackground,      ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GenderRepartition::FemaleMaleOther, d.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::OnlyFemale,      f. ,  d.onlyFemaleBackground,     ui.pbTotalFemaleColorName, ui.pbTotalFemaleColorBackground},
+//        {GR::OnlyMale,        f.onlyMaleName,    d.onlyMaleBackground,       ui.pbTotalMaleColorName, ui.pbTotalMaleColorBackground},
+//        {GR::OnlyOther,       f.onlyOtherName,   d.onlyOtherBackground,      ui.pbTotalOtherColorName, ui.pbTotalOtherColorBackground},
+//        {GR::MostlyFemale,    f.mostlyFemaleName,d.mostlyFemaleBackground,   ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::MostlyMale,      f.mostlyMaleName,  d.mostlyMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::MostlyOther,     f.mostlyOtherName, d.mostlyOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::FemaleMale,      f.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::FemaleOther,     f.femaleOtherName, d.femaleOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::MaleOther,       f.maleOtherName,   d.maleOtherBackground,      ui.pbFemaleColor1, ui.pbFemaleColor1},
+//        {GR::FemaleMaleOther, f.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
 //    };
 //    colorsGendersD[GenderRepartition::MostlyFemale] = std::make_unique<QColorDialog>();
 
@@ -271,6 +286,7 @@ void AllFirstNamesMW::init_connections(){
         update_filter_settings_from_ui();
     });
     connect(ui.sbAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filter_settings_from_ui();});
+    connect(ui.sbLastAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filter_settings_from_ui();});
     connect(ui.sbPeakYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filter_settings_from_ui();});
     // # line edit
     connect(ui.leStartsBy, &QLineEdit::textChanged, this, [&](){update_filter_settings_from_ui();});
@@ -293,16 +309,22 @@ void AllFirstNamesMW::init_connections(){
     connect(ui.cbMajorMale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbMajorOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbFemaleMale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     // connect(ui.cbFemaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     // connect(ui.cbMaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbFiltersPopDep, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbFiltersYears, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbLastAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbPeakYear, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     // # comboboxes
     connect(ui.cbOpeAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbOpeLastAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
     connect(ui.cbOpePeakYear, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbOpePer, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbPopPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
     // # radiobutton
     connect(ui.rbSortAZ,   &QRadioButton::toggled, this, [&](){update_filter_settings_from_ui();});
     connect(ui.rbSortZA,   &QRadioButton::toggled, this, [&](){update_filter_settings_from_ui();});
@@ -964,21 +986,36 @@ void AllFirstNamesMW::update_filter_settings_from_ui(){
     settings.filters.containsTextes          = ui.leContains->text().split(Filters::sepWords);
     settings.filters.doNoContains            = ui.cbDoNotContain->isChecked();
     settings.filters.doNotContainsTextes     = ui.leDoNotContain->text().split(Filters::sepWords);
-    settings.filters.nbLetters        = ui.cbNbLetters->isChecked();;
+    settings.filters.nbLetters               = ui.cbNbLetters->isChecked();;
     settings.filters.minLettersNb            = ui.sbMinNbLetters->value();
     settings.filters.maxLettersNb            = ui.sbMaxNbLetters->value();
     // year
+    // # appears
     settings.filters.filterYear              = ui.cbFiltersYears->isChecked();
     settings.filters.appearsBefore           = ui.cbOpeAppearsYear->currentIndex() == 0 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsDuring           = ui.cbOpeAppearsYear->currentIndex() == 1 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsAfter            = ui.cbOpeAppearsYear->currentIndex() == 2 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsUnknow           = ui.cbOpeAppearsYear->currentIndex() == 3 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsYear             = ui.sbAppearsYear->value();
+    // # last appears
+    settings.filters.lastAppearsBefore       = ui.cbOpeLastAppearsYear->currentIndex() == 0 && ui.cbLastAppearsYear->isChecked();
+    settings.filters.lastAppearsDuring       = ui.cbOpeLastAppearsYear->currentIndex() == 1 && ui.cbLastAppearsYear->isChecked();
+    settings.filters.lastAppearsAfter        = ui.cbOpeLastAppearsYear->currentIndex() == 2 && ui.cbLastAppearsYear->isChecked();
+    settings.filters.lastAppearsUnknow       = ui.cbOpeLastAppearsYear->currentIndex() == 3 && ui.cbLastAppearsYear->isChecked();
+    settings.filters.lastAppearsYear         = ui.sbAppearsYear->value();
+    // # peak
     settings.filters.peakBefore              = ui.cbOpePeakYear->currentIndex() == 0 && ui.cbPeakYear->isChecked();
     settings.filters.peakDuring              = ui.cbOpePeakYear->currentIndex() == 1 && ui.cbPeakYear->isChecked();
     settings.filters.peakAfter               = ui.cbOpePeakYear->currentIndex() == 2 && ui.cbPeakYear->isChecked();
     settings.filters.peakUnknow              = ui.cbOpePeakYear->currentIndex() == 3 && ui.cbPeakYear->isChecked();
     settings.filters.peakYear                = ui.sbPeakYear->value();
+    // period
+    settings.filters.filterPopPeriod         = ui.cbFiltersPopPeriod->isChecked();
+    settings.filters.period                  = static_cast<Period>(ui.cbPeriod->currentIndex());
+    settings.filters.periodAtLeast           = ui.cbOpePer->currentIndex() == 0;
+    settings.filters.periodEqual             = ui.cbOpePer->currentIndex() == 1;
+    settings.filters.periodAtLast            = ui.cbOpePer->currentIndex() == 2;
+    settings.filters.popPeriod               = static_cast<Popularity>(ui.cbPopPeriod->currentIndex());
     // sortings
     settings.filters.sortAZ                  = ui.rbSortAZ->isChecked();
     settings.filters.sortZA                  = ui.rbSortZA->isChecked();
@@ -1085,15 +1122,17 @@ void AllFirstNamesMW::update_displayed_info(){
         return;
     }
 
-    QColor c1 = Qt::black;//settings.display.bothCol1;
-    QColor c2 = Qt::black;//settings.display.bothCol2;
+
+    const auto gr = data.pData.infosPerName[data.currentName].genderRepartition;
+    const QColor backgroundCol = settings.display.genderRepartitionsBackgroundColors[gr];
+    const QColor foregroundCol = settings.display.genderRepartitionsForegroundColors[gr];
 
     ui.laFirstName->setStyleSheet(QSL("QLabel[objectName^=\"laFirstName\"] { color:rgb(")
-        % QString::number(c2.red()) % "," % QString::number(c2.green()) % "," % QString::number(c2.blue()) % QSL("); }"));
+        % QString::number(foregroundCol.red()) % "," % QString::number(foregroundCol.green()) % "," % QString::number(foregroundCol.blue()) % QSL("); }"));
     ui.laLastName->setStyleSheet(QSL("QLabel[objectName^=\"laLastName\"] { color:rgb(")
-        % QString::number(c2.red()) % "," % QString::number(c2.green()) % "," % QString::number(c2.blue()) % QSL("); }"));
+        % QString::number(foregroundCol.red()) % "," % QString::number(foregroundCol.green()) % "," % QString::number(foregroundCol.blue()) % QSL("); }"));
     ui.wCurrentName->setStyleSheet(QSL("QWidget[objectName^=\"wCurrentName\"] { background-color:rgb(")
-        % QString::number(c1.red()) % "," % QString::number(c1.green()) % "," % QString::number(c1.blue()) % QSL("); }"));
+        % QString::number(backgroundCol.red()) % "," % QString::number(backgroundCol.green()) % "," % QString::number(backgroundCol.blue()) % QSL("); }"));
 
     ui.laFirstName->setText(firstNameStartStyle % data.currentName.v % endStyle);
     ui.laLastName->setText(lastNameStartStyle % ui.leLastName->text().toUpper() % endStyle);

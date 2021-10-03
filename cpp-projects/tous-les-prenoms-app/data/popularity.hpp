@@ -33,8 +33,8 @@ static constexpr TupleArray<Popularity::SizeEnum, TPop> popularities = {{
     {Popularity::Hight,         Percentage{0.96f},  "Hight"sv},
     {Popularity::Average,       Percentage{0.92f},  "Average"sv},
     {Popularity::Low,           Percentage{0.85f},  "Low"sv},
-    {Popularity::Rare,          Percentage{0.80f},  "Rare"sv},
-    {Popularity::Very_rare,     Percentage{0.60f},  "Very rare"sv},
+    {Popularity::Rare,          Percentage{0.60f},  "Rare"sv},
+    {Popularity::Very_rare,     Percentage{0.40f},  "Very rare"sv},
     {Popularity::Inexistant,    Percentage{0.f},    "Inexistant"sv},
 }};
 
@@ -50,7 +50,7 @@ static constexpr TupleArray<Popularity::SizeEnum, TPop> popularities = {{
 
 [[maybe_unused]] constexpr static Popularity get_popularity(Order order, Count count){
 
-    const float percentage = 1.f*order.v/count.v;
+    const float percentage = 1.f - 1.f*order.v/count.v;
     for(const auto &p : popularities.data){
         if(percentage > std::get<1>(p).v){
             return std::get<0>(p);
