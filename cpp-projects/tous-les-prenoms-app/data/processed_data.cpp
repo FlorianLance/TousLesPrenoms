@@ -100,7 +100,6 @@ void ProcessedData::generate(InputData &inData){
             year = Convert::to_year(line.left(idSep));
             line = line.mid(idSep+1);
 
-
             idSep = line.indexOf(lineSep, 0, Qt::CaseSensitivity::CaseInsensitive);
             dep = Convert::to_department(line.left(idSep));
 
@@ -145,8 +144,14 @@ void ProcessedData::generate(InputData &inData){
             // # count
             nameInfo.total.v += info.count.v;
             // ## period
-            nameInfo.countPerPeriod[static_cast<std::uint8_t>(get_period(info.year))].v += info.count.v;
-            nameInfo.countPerPeriod[static_cast<std::uint8_t>(Period::p1900_2020)].v += info.count.v;
+            auto period = get_period(info.year);
+            if(period != Period::p1900_2020){
+                nameInfo.countPerPeriod[static_cast<std::uint8_t>(period)].v += info.count.v;
+                nameInfo.countPerPeriod[static_cast<std::uint8_t>(Period::p1900_2020)].v += info.count.v;
+            }else{
+                nameInfo.countPerPeriod[static_cast<std::uint8_t>(Period::p1900_2020)].v += info.count.v;
+            }
+
             // ## gender
             nameInfo.countPerGender[static_cast<std::uint8_t>(info.gender)].v += info.count.v;
 
@@ -154,6 +159,7 @@ void ProcessedData::generate(InputData &inData){
             infosPerGender[info.gender].total.v += info.count.v;;
             infosPerGender[info.gender].counterName[nameLineInfo.first].v += info.count.v;
             infosPerGender[info.gender].countNameYear[info.year][nameLineInfo.first].v += info.count.v;
+            infosPerGender[info.gender].countNamePeriod[period][nameLineInfo.first].v += info.count.v;
 
             // year
             infosPerYear[info.year].total.v += info.count.v;
@@ -175,10 +181,14 @@ void ProcessedData::generate(InputData &inData){
         // period
         for(const auto &period : periods.data){
             const auto p = std::get<0>(period);
+            const auto count = nameInfo.countPerPeriod[static_cast<std::uint8_t>(p)];
             infosPerPeriod[p].countPerName.emplace_back(
                 nameLineInfo.first,
-                nameInfo.countPerPeriod[static_cast<std::uint8_t>(p)]
+                count
             );
+            if(count.v != 0){
+                infosPerPeriod[p].total.v++;
+            }
         }
 
         // gender repartition
@@ -201,10 +211,16 @@ void ProcessedData::generate(InputData &inData){
         for(size_t ii = 0; ii < periodInfo.second.countPerName.size(); ++ii){
             const Order order{static_cast<std::uint16_t>(ii)};
             const auto idP = static_cast<std::uint8_t>(periodInfo.first);
-            const auto n = periodInfo.second.countPerName[ii].first;
-            infosPerName[n].orderPerPeriod[idP] = order;
-            infosPerName[n].popularityPerPeriod[idP] = get_popularity(order, infosPerName[n].countPerPeriod[idP]);
+            const auto count = periodInfo.second.countPerName[ii].second;
+            const auto name = periodInfo.second.countPerName[ii].first;
+            infosPerName[name].orderPerPeriod[idP] = order;
+            if(count.v != 0){
+                infosPerName[name].popularityPerPeriod[idP] = get_popularity(order, infosPerPeriod[periodInfo.first].total);
+            }else{
+                infosPerName[name].popularityPerPeriod[idP] = Popularity::Very_rare;
+            }
         }
+
     }
 
     Bench::stop();

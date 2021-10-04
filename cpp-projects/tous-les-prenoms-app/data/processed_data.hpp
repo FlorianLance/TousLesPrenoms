@@ -30,6 +30,7 @@ struct GenderProcessedInfos{
     Count total;
     um<FirstNameV, Count> counterName;
     um<Year, um<FirstNameV, Count>> countNameYear;
+    um<Period, um<FirstNameV, Count>> countNamePeriod;
 };
 
 struct YearProcessedInfos{
@@ -40,6 +41,7 @@ struct YearProcessedInfos{
 
 struct PeriodProcessedInfos{
     Period period;
+    Count total;
     std::vector<std::pair<FirstNameV, Count>> countPerName;
 };
 
@@ -60,14 +62,14 @@ struct ProcessedData{
     void generate(InputData &inData);
 
     constexpr static QChar lineSep = ';';
-    constexpr static Popularity initPop = Popularity::Inexistant;
+    constexpr static Popularity initPop = Popularity::Very_rare;
     constexpr static Year initYear = {-1};
     constexpr static Count initC = {0};
     constexpr static Order initO = {0};
     constexpr static Interval initInterval = {initYear,initYear};
-    constexpr static std::array<Popularity, static_cast<int>(Period::SizeEnum)> initPopulparityPerPeriod = {initPop,initPop,initPop,initPop,initPop,initPop,initPop,initPop,initPop,initPop};
-    constexpr static std::array<Count, static_cast<int>(Period::SizeEnum)> initCountPerPeriod = {initC,initC,initC,initC,initC,initC,initC,initC,initC,initC};
-    constexpr static std::array<Order, static_cast<int>(Period::SizeEnum)> initOrderPerPeriod = {initO,initO,initO,initO,initO,initO,initO,initO,initO,initO};
+    constexpr static std::array<Popularity, static_cast<int>(Period::SizeEnum)> initPopulparityPerPeriod = {initPop,initPop,initPop,initPop,initPop,initPop,initPop,initPop,initPop};
+    constexpr static std::array<Count, static_cast<int>(Period::SizeEnum)> initCountPerPeriod = {initC,initC,initC,initC,initC,initC,initC,initC,initC};
+    constexpr static std::array<Order, static_cast<int>(Period::SizeEnum)> initOrderPerPeriod = {initO,initO,initO,initO,initO,initO,initO,initO,initO};
     constexpr static std::array<Count, static_cast<int>(Gender::SizeEnum)> initCountPerGender = {initC,initC,initC};
 };
 

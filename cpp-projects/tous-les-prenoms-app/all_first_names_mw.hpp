@@ -117,6 +117,8 @@ public:
     MapW *mapW = nullptr;
     QListView *filteredNamesV = nullptr;
     ui::ListNamesM filteredNamesM;
+    CurveW *curveW = nullptr;
+
     // # forms
     std::unordered_map<GenderRepartition, std::unique_ptr<QColorDialog>> colorsGendersD;
 //    QColorDialog femaleCol1D;
@@ -148,6 +150,8 @@ public:
 
     QThread listWorkerT;
     std::unique_ptr<ListWorker> listWorker;
+
+    std::vector<std::vector<QLabel*>> tableInfoWidgets;
 
 private:
 

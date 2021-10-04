@@ -23,7 +23,6 @@ enum class Period : std::uint8_t {
     p2000_2009,
     p2010_2020,
     p1900_2020,
-    pUnknow,
     SizeEnum
 };
 
@@ -41,7 +40,6 @@ static constexpr TupleArray<Period::SizeEnum, TPer> periods = {{
     {Period::p2000_2009, Interval{{2000}, {2009}},   10.f / fullInterval.length(), "2000-2009"sv},
     {Period::p2010_2020, Interval{{2010}, {2020}},   8.f  / fullInterval.length(), "2010-2020"sv},
     {Period::p1900_2020, Interval{{1900}, {2020}},   1.f  / fullInterval.length(), "1900-2020"sv},
-    {Period::pUnknow,    Interval{{0},    {3000}},   1.f  / fullInterval.length(), "unknow"sv},
 }};
 
 constexpr Period get_period(Year y){
@@ -51,7 +49,7 @@ constexpr Period get_period(Year y){
             return std::get<0>(p);
         }
     }
-    return Period::pUnknow;
+    return Period::p1900_2020;
 }
 
 constexpr float get_factor(Period period){

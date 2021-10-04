@@ -22,6 +22,7 @@
 #include "utility/convert.hpp"
 #include "utility/benchmark.hpp"
 #include "utility/qt_ui.hpp"
+#include "utility/qt_str.hpp"
 
 
 //#include <QLineSeries>
@@ -116,12 +117,16 @@ void AllFirstNamesMW::init_ui_filters(){
         "au moins", "égale", "au plus"
     };
     ui.cbOpePer->addItems(opeItems);
-    ui.cbOpePer->setCurrentIndex(0);
+    ui.cbOpePer->setCurrentIndex(1);
 
-    const QStringList popItems = {
-        "Inexistante", "Très rare", "Rare", "Basse",
-        "Moyenne", "Haute", "Très haute", "Immense"
-    };
+    QStringList popItems;
+    for(const auto &popularity : popularities.data){
+        popItems << from_view(std::get<2>(popularity));
+    }
+
+
+
+
     ui.cbPopPeriod->addItems(popItems);
     ui.cbPopPeriod->setCurrentIndex(0);
 
@@ -136,23 +141,42 @@ void AllFirstNamesMW::init_ui_filters(){
     const QStringList perItems = {
         "1900-1924", "1925-1949", "1950-1969",
         "1970-1979", "1980-1989", "1990-1999",
-        "2000-2009", "2010-2020", "1900-2020",
-        "inconnue"
+        "2000-2009", "2010-2020", "1900-2020"
     };
     ui.cbPeriod->addItems(perItems);
-    ui.cbPeriod->setCurrentIndex(7);
+    ui.cbPeriod->setCurrentIndex(8);
 
 
     const QStringList yearsOpeItems = {
         "avant", "durant", "après", "inconnu"
     };
-    ui.cbOpeAppearsYear->addItems(yearsOpeItems);
+    ui.cbOpeAppearsYear->addItems(yearsOpeItems);    
     ui.cbOpeLastAppearsYear->addItems(yearsOpeItems);
     ui.cbOpePeakYear->addItems(yearsOpeItems);
 
     ui.cbOpeAppearsYear->setCurrentIndex(2);
     ui.cbOpeLastAppearsYear->setCurrentIndex(0);
     ui.cbOpePeakYear->setCurrentIndex(1);
+
+
+    // infos
+    for(int ii = 0; ii < perItems.size(); ++ii){
+        ui.twPeriodsInfo->insertRow(0);
+    }
+
+    for(int ii = 0; ii < perItems.size(); ++ii){
+
+        std::vector<QLabel*> lineWidgets;
+        for(int jj = 0; jj < ui.twPeriodsInfo->columnCount(); ++jj){
+            QLabel *la = new QLabel("-");
+            ui.twPeriodsInfo->setCellWidget(ii, jj, la);
+            lineWidgets.push_back(la);
+        }
+
+        tableInfoWidgets.push_back(std::move(lineWidgets));
+
+    }
+    ui.twPeriodsInfo->setVerticalHeaderLabels(perItems);
 }
 
 void AllFirstNamesMW::init_ui_colors(){
@@ -179,6 +203,11 @@ void AllFirstNamesMW::init_ui_colors(){
 }
 
 void AllFirstNamesMW::init_ui_curves(){
+
+    curveW = new CurveW();
+    curveW->set_fitted_state(false);
+    curveW->remove_symbol();
+    ui.vlCurve->addWidget(curveW);
     //    QBarSet *set0 = new QBarSet("Femmes");
     //    QBarSet *set1 = new QBarSet("Hommes");
     //    QBarSet *set2 = new QBarSet("Autres");
@@ -1154,13 +1183,62 @@ void AllFirstNamesMW::update_displayed_info(){
         ui.laPeakYear->setText("Inconnue");
     }
 
-    ui.laCount->setText(QString::number(nameInfo.total.v));
-    ui.laNbFem->setText(QString::number(nameInfo.countPerGender[0].v));
-    ui.laNbMale->setText(QString::number(nameInfo.countPerGender[1].v));
+    size_t ii = 0;
+    for(const auto &period : periods.data){
 
-//    ui.pbPrevious->setEnabled(previousInfo.size() != 0);
+        const auto p = std::get<0>(period);
+        const auto pId = static_cast<std::uint8_t>(p);
 
-//    if(currentInfo != nullptr){
+        tableInfoWidgets[ii][0]->setText(QString::number(nameInfo.countPerPeriod[pId].v));
+        tableInfoWidgets[ii][1]->setText(QString::number(data.pData.infosPerGender[Gender::Female].countNamePeriod[p][nameInfo.name].v));
+        tableInfoWidgets[ii][2]->setText(QString::number(data.pData.infosPerGender[Gender::Male].countNamePeriod[p][nameInfo.name].v));
+
+        auto order = nameInfo.orderPerPeriod[pId].v;
+        tableInfoWidgets[ii][3]->setText(QString::number(order+1));
+
+        if(nameInfo.countPerPeriod[pId].v > 0){
+            tableInfoWidgets[ii][4]->setText(QString::number(1.f*order/data.pData.infosPerPeriod[p].total.v));
+        }else{
+            tableInfoWidgets[ii][4]->setText("-");
+        }
+
+        tableInfoWidgets[ii][5]->setText(from_view(get_name(nameInfo.popularityPerPeriod[pId])));
+
+        ++ii;
+    }
+
+
+    size_t max = 0;
+    std::vector<double> years;
+    for(size_t ii = 1900; ii <= 2020; ++ii){
+        years.emplace_back(static_cast<double>(ii));
+    }
+
+    std::vector<double> counts;
+    for(auto& info : data.pData.infosPerYear){
+        if(info.first.v == -1){
+            continue;
+        }
+
+        auto count = info.second.counterName[nameInfo.name];
+        counts.emplace_back(static_cast<double>(count.v));
+        if(count.v > max){
+            max = count.v;
+        }
+    }
+    if(max == 0){
+        max = 10;
+    }
+
+    if(ui.cbCurves->currentIndex() == 0){
+
+        curveW->set_title("");
+        curveW->set_x_title("Années");
+        curveW->set_y_title("Nombre");
+        curveW->set_x_range(1900, 2020);
+        curveW->set_y_range(0, static_cast<double>(max));
+        curveW->set_points(years, counts);
+    }
 
 
 //        // #############################################################################

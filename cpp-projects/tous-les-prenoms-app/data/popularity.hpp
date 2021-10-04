@@ -9,15 +9,12 @@ namespace tool {
 
 using namespace std::literals::string_view_literals;
 
-enum class Popularity : int{
-    Inexistant=0,
-    Very_rare,
-    Rare,
-    Low,
-    Average,
+enum class Popularity : std::uint8_t{
+    Huge=0,
     Hight,
-    Very_hight,
-    Huge,
+    Average,
+    Rare,
+    Very_rare,
     SizeEnum
 };
 
@@ -28,14 +25,11 @@ using TPop= std::tuple<
 
 static constexpr TupleArray<Popularity::SizeEnum, TPop> popularities = {{
     TPop
-    {Popularity::Huge,          Percentage{0.995f}, "Huge"sv},
-    {Popularity::Very_hight,    Percentage{0.98f},  "Very hight"sv},
-    {Popularity::Hight,         Percentage{0.96f},  "Hight"sv},
-    {Popularity::Average,       Percentage{0.92f},  "Average"sv},
-    {Popularity::Low,           Percentage{0.85f},  "Low"sv},
-    {Popularity::Rare,          Percentage{0.60f},  "Rare"sv},
-    {Popularity::Very_rare,     Percentage{0.40f},  "Very rare"sv},
-    {Popularity::Inexistant,    Percentage{0.f},    "Inexistant"sv},
+    {Popularity::Huge,          Percentage{0.015f}, "Immense"sv},
+    {Popularity::Hight,         Percentage{0.05f},   "Haute"sv},
+    {Popularity::Average,       Percentage{0.15f},  "Moyenne"sv},
+    {Popularity::Rare,          Percentage{0.4f},  "Rare"sv},
+    {Popularity::Very_rare,     Percentage{1.00f},  "Très rare"sv},
 }};
 
 
@@ -50,13 +44,13 @@ static constexpr TupleArray<Popularity::SizeEnum, TPop> popularities = {{
 
 [[maybe_unused]] constexpr static Popularity get_popularity(Order order, Count count){
 
-    const float percentage = 1.f - 1.f*order.v/count.v;
+    const float percentage =1.f*order.v/count.v;
     for(const auto &p : popularities.data){
-        if(percentage > std::get<1>(p).v){
+        if(percentage < std::get<1>(p).v){
             return std::get<0>(p);
         }
     }
-    return Popularity::Inexistant;
+    return Popularity::Very_rare;
 }
 
 
