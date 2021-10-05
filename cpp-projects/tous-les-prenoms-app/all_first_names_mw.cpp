@@ -207,6 +207,12 @@ void AllFirstNamesMW::init_ui_curves(){
     curveW = new CurveW();
     curveW->set_fitted_state(false);
     curveW->remove_symbol();
+
+    QPen p(Qt::blue);
+    p.setWidthF(1.5);
+    curveW->set_pen(p);
+
+
     ui.vlCurve->addWidget(curveW);
     //    QBarSet *set0 = new QBarSet("Femmes");
     //    QBarSet *set1 = new QBarSet("Hommes");
@@ -1236,7 +1242,7 @@ void AllFirstNamesMW::update_displayed_info(){
         curveW->set_x_title("Années");
         curveW->set_y_title("Nombre");
         curveW->set_x_range(1900, 2020);
-        curveW->set_y_range(0, static_cast<double>(max));
+        curveW->set_y_range(0, 1.2*max);
         curveW->set_points(years, counts);
     }
 
