@@ -22,57 +22,40 @@ void ProcessedData::generate(InputData &inData){
 
     // init infos per department
     for(const auto &dep : departments.data){
-        infosPerDepartment[std::get<0>(dep)] = {std::get<0>(dep), initC};
+        infosPerDepartment[std::get<0>(dep)] = {std::get<0>(dep), initCount, initCount, {}};
     }
 
     // init infos per year
-    infosPerYear[Year{-1}] = {Year{-1}, initC, {}};
+    infosPerYear[Year{-1}] = {Year{-1}, initCount, {}};
     for(std::int16_t ii = StartYear.v; ii <= EndYear.v; ++ii){
-        infosPerYear[Year{ii}] = {Year{ii}, initC, {}};
+        infosPerYear[Year{ii}] = {Year{ii}, initCount, {}};
     }
 
     // init infos per gender
-    infosPerGender[Gender::Female]  = {Gender::Female,  initC, {}, {}};
-    infosPerGender[Gender::Male]    = {Gender::Male,    initC, {}, {}};
-    infosPerGender[Gender::Other]   = {Gender::Other,   initC, {}, {}};
+    infosPerGender[Gender::Female]  = {Gender::Female,  initCount, {}, {}};//, {}};
+    infosPerGender[Gender::Male]    = {Gender::Male,    initCount, {}, {}};//, {}};
+    infosPerGender[Gender::Other]   = {Gender::Other,   initCount, {}, {}};//, {}};
 
     // init infos per year
     for(std::int16_t ii = StartYear.v; ii <= EndYear.v; ++ii){
         const Year y{ii};
-        infosPerYear[y] = {y, initC, {}};
-
-        // sub gender
-        for(auto &infoPerGender : infosPerGender){
-            infoPerGender.second.countNameYear[y] = {};
-        }
+        infosPerYear[y] = {y, initCount, {}};
     }
 
     // init infos per name
     for(const auto &nameInfo : inData.namesInfo){
         infosPerName[nameInfo.first] = {
             nameInfo.first,                 // name
-            initC,                          // count
+            initCount,                      // count
             {},                             // gender repartition
             initInterval,                   // inteval apparition
             initYear,                       // year popularity peak
+            initDep,                        // most common department
             initPopulparityPerPeriod,       // popularity per period
             initCountPerPeriod,             // count per period
             initOrderPerPeriod,             // order per period
             initCountPerGender              // count per gender
         };
-
-        // sub year
-//        for(auto &infoPerYear : infosPerYear){
-//            infoPerYear.second.counterName[nameInfo.first] = {0};
-//        }
-
-        // sub gender
-//        for(auto &infoPerGender : infosPerGender){
-//            infoPerGender.second.counterName[nameInfo.first] = {0};
-//            for(auto &countName : infoPerGender.second.countNameYear){
-//                countName.second[nameInfo.first] = {0};
-//            }
-//        }
     }
 
 
@@ -119,6 +102,7 @@ void ProcessedData::generate(InputData &inData){
         NameProcessedInfos &nameInfo = infosPerName[nameLineInfo.first];
 
         std::unordered_set<Year> years;
+        std::unordered_set<Department> departments;
         for(const auto &info : nameLineInfo.second.infos){
 
             // name
@@ -137,7 +121,7 @@ void ProcessedData::generate(InputData &inData){
                 if(info.year.v > nameInfo.intervalApparition.end.v){
                     nameInfo.intervalApparition.end = info.year;
                 }
-                if(years.count(info.year) == 0){
+                if(!years.contains(info.year)){
                     years.insert(info.year);
                 }
             }
@@ -158,15 +142,39 @@ void ProcessedData::generate(InputData &inData){
             // gender
             infosPerGender[info.gender].total.v += info.count.v;;
             infosPerGender[info.gender].counterName[nameLineInfo.first].v += info.count.v;
-            infosPerGender[info.gender].countNameYear[info.year][nameLineInfo.first].v += info.count.v;
             infosPerGender[info.gender].countNamePeriod[period][nameLineInfo.first].v += info.count.v;
 
             // year
             infosPerYear[info.year].total.v += info.count.v;
-            infosPerYear[info.year].counterName[nameLineInfo.first].v += info.count.v;
+            if(infosPerYear[info.year].counterName.count(nameLineInfo.first) == 0){
+                infosPerYear[info.year].counterName[nameLineInfo.first] = {info.count.v};
+            }else{
+                infosPerYear[info.year].counterName[nameLineInfo.first].v += info.count.v;
+            }
 
-            // department            
-            infosPerDepartment[info.department].total.v += info.count.v;
+            // department
+            if(info.department != Dep::Inconnu){
+                auto &infoD = infosPerDepartment[info.department];
+                infoD.total.v += info.count.v;
+
+                if(infoD.infosPerName.count(nameLineInfo.first) == 0){
+                    infoD.infosPerName[nameLineInfo.first].count = info.count;
+                }else{
+                    infoD.infosPerName[nameLineInfo.first].count.v += info.count.v;
+                }
+
+                auto &infoN = infoD.infosPerName[nameLineInfo.first];
+
+                if(info.gender == Gender::Male){
+                    infoN.nbMales.v += info.count.v;
+                }else if(info.gender == Gender::Female){
+                    infoN.nbFemales.v += info.count.v;
+                }
+
+                if(!departments.contains(info.department)){
+                    departments.insert(info.department);
+                }
+            }
         }
 
         // name
@@ -198,6 +206,18 @@ void ProcessedData::generate(InputData &inData){
             infosPerGender[Gender::Other].counterName[nameLineInfo.first].v,
             nameInfo.total.v
         );
+
+        // department
+        size_t maxCountPerDep = 0;
+        for(const auto &dep : departments){            
+            if(maxCountPerDep < infosPerDepartment[dep].infosPerName[nameInfo.name].count.v){
+                maxCountPerDep = infosPerDepartment[dep].infosPerName[nameInfo.name].count.v;
+                nameInfo.mostCommonDepartment = dep;
+            }
+        }
+        if(maxCountPerDep != 0){
+            infosPerDepartment[nameInfo.mostCommonDepartment].nbMostCommonNames.v += 1;
+        }
     });
 
     Bench::stop();
@@ -205,14 +225,14 @@ void ProcessedData::generate(InputData &inData){
 
     for(auto &periodInfo : infosPerPeriod){
         std::sort(std::begin(periodInfo.second.countPerName), std::end(periodInfo.second.countPerName), [](auto &left, auto &right) {
-            return left.second.v > right.second.v;
+            return left.count.v > right.count.v;
         });
 
         for(size_t ii = 0; ii < periodInfo.second.countPerName.size(); ++ii){
             const Order order{static_cast<std::uint16_t>(ii)};
             const auto idP = static_cast<std::uint8_t>(periodInfo.first);
-            const auto count = periodInfo.second.countPerName[ii].second;
-            const auto name = periodInfo.second.countPerName[ii].first;
+            const auto count = periodInfo.second.countPerName[ii].count;
+            const auto name = periodInfo.second.countPerName[ii].name;
             infosPerName[name].orderPerPeriod[idP] = order;
             if(count.v != 0){
                 infosPerName[name].popularityPerPeriod[idP] = get_popularity(order, infosPerPeriod[periodInfo.first].total);
@@ -220,10 +240,25 @@ void ProcessedData::generate(InputData &inData){
                 infosPerName[name].popularityPerPeriod[idP] = Popularity::Very_rare;
             }
         }
+    }
 
+    for(auto &depInfo : infosPerDepartment){
+        std::vector<NameCount> total;
+        total.reserve(depInfo.second.infosPerName.size());
+        for(auto &nameCount : depInfo.second.infosPerName){
+            total.emplace_back(NameCount{nameCount.first, nameCount.second.count});
+        }
+        std::sort(std::begin(total), std::end(total), [](auto &left, auto &right) {
+            return left.count.v > right.count.v;
+        });
+
+        std::uint16_t ii = 0;
+        for(const auto &nameCount : total){
+            const auto order = Order{ii++};
+            depInfo.second.infosPerName[nameCount.name].order = order;
+            depInfo.second.infosPerName[nameCount.name].popularity = get_popularity(order, nameCount.count);
+        }
     }
 
     Bench::stop();
-
-
 }

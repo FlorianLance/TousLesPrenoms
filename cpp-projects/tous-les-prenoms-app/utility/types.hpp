@@ -20,6 +20,7 @@ struct Percentage{
 
 struct Count{
     size_t v;
+//    std::uint32_t v;
 };
 
 struct Order{

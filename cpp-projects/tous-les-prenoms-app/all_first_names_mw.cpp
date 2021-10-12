@@ -78,15 +78,28 @@ void AllFirstNamesMW::init_ui(){
     ui.setupUi(this);
 
     ui.vlFiltered->addWidget(filteredNamesV = new QListView());
+    filteredNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Filtered);
     filteredNamesV->setMouseTracking(true);
-    filteredNamesM.nData = &data;
-    filteredNamesV->setModel(&filteredNamesM);
-
+    filteredNamesM->nData = &data;
+    filteredNamesV->setModel(filteredNamesM.get());
     filteredNamesV->viewport()->installEventFilter(this);
 
+    ui.vlSaved->insertWidget(0, savedNamesV = new QListView());
+    savedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Saved);
+    savedNamesV->setMouseTracking(true);
+    savedNamesM->nData = &data;
+    savedNamesV->setModel(savedNamesM.get());
+    savedNamesV->viewport()->installEventFilter(this);
+
+    ui.vlRemoved->insertWidget(0, removedNamesV = new QListView());
+    removedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Removed);
+    removedNamesV->setMouseTracking(true);
+    removedNamesM->nData = &data;
+    removedNamesV->setModel(removedNamesM.get());
+    removedNamesV->viewport()->installEventFilter(this);
 
     init_ui_filters();   
-    init_ui_colors();
+    init_ui_settings();
     init_ui_curves();
     init_ui_map();
 
@@ -119,13 +132,13 @@ void AllFirstNamesMW::init_ui_filters(){
     ui.cbOpePer->addItems(opeItems);
     ui.cbOpePer->setCurrentIndex(1);
 
+    ui.cbOpeDep->addItems(opeItems);
+    ui.cbOpeDep->setCurrentIndex(1);
+
     QStringList popItems;
     for(const auto &popularity : popularities.data){
         popItems << from_view(std::get<2>(popularity));
     }
-
-
-
 
     ui.cbPopPeriod->addItems(popItems);
     ui.cbPopPeriod->setCurrentIndex(0);
@@ -158,12 +171,10 @@ void AllFirstNamesMW::init_ui_filters(){
     ui.cbOpeLastAppearsYear->setCurrentIndex(0);
     ui.cbOpePeakYear->setCurrentIndex(1);
 
-
-    // infos
+    // periods
     for(int ii = 0; ii < perItems.size(); ++ii){
         ui.twPeriodsInfo->insertRow(0);
     }
-
     for(int ii = 0; ii < perItems.size(); ++ii){
 
         std::vector<QLabel*> lineWidgets;
@@ -173,13 +184,62 @@ void AllFirstNamesMW::init_ui_filters(){
             lineWidgets.push_back(la);
         }
 
-        tableInfoWidgets.push_back(std::move(lineWidgets));
+        tablePeriodsInfoWidgets.push_back(std::move(lineWidgets));
 
     }
     ui.twPeriodsInfo->setVerticalHeaderLabels(perItems);
+
+    // departments
+    QStringList departmentsItems;
+    for(const auto &dep : departments.data){
+        departmentsItems << QSL("(") % QString::number(std::get<1>(dep).v) % QSL(") ") % from_view(std::get<2>(dep));
+    }
+    departmentsItems.removeLast();
+    ui.cbDep->addItems(departmentsItems);
+    for(int ii = 0; ii < departmentsItems.size(); ++ii){
+        ui.twDepInfo->insertRow(0);
+    }
+    for(int ii = 0; ii < departmentsItems.size(); ++ii){
+
+        std::vector<QLabel*> lineWidgets;
+        for(int jj = 0; jj < ui.twDepInfo->columnCount(); ++jj){
+            QLabel *la = new QLabel("-");
+            ui.twDepInfo->setCellWidget(ii, jj, la);
+            lineWidgets.push_back(la);
+        }
+
+        tableDepartmentsInfoWidgets.push_back(std::move(lineWidgets));
+    }
+    ui.twDepInfo->setVerticalHeaderLabels(departmentsItems);
+
+    // tooltip
+    ui.pbGenderHelp->setToolTip(
+        "Utilisation du prénom:\n"
+        "-totalement: plus de 98%\n"
+        "-majoritairement: plus de 75%\n"
+        "-équilibrée: entre 30% et 60%"
+    );
 }
 
-void AllFirstNamesMW::init_ui_colors(){
+void AllFirstNamesMW::init_ui_curves(){
+
+    curveW = new CurveW();
+    curveW->set_fitted_state(false);
+    curveW->remove_symbol();
+
+    QPen p(Qt::blue);
+    p.setWidthF(1.5);
+    curveW->set_pen(p);
+
+    ui.vlCurve->addWidget(curveW);
+}
+
+void AllFirstNamesMW::init_ui_map(){
+    mapW = new MapW(ui.hlMap);
+}
+
+
+void AllFirstNamesMW::init_ui_settings(){
 
     // dialogs
 
@@ -202,102 +262,6 @@ void AllFirstNamesMW::init_ui_colors(){
 
 }
 
-void AllFirstNamesMW::init_ui_curves(){
-
-    curveW = new CurveW();
-    curveW->set_fitted_state(false);
-    curveW->remove_symbol();
-
-    QPen p(Qt::blue);
-    p.setWidthF(1.5);
-    curveW->set_pen(p);
-
-
-    ui.vlCurve->addWidget(curveW);
-    //    QBarSet *set0 = new QBarSet("Femmes");
-    //    QBarSet *set1 = new QBarSet("Hommes");
-    //    QBarSet *set2 = new QBarSet("Autres");
-
-    //    QStackedBarSeries *series = new QStackedBarSeries();
-    //    series->append(set0);
-    //    series->append(set1);
-    //    series->append(set2);
-
-    //    seriesWomen = new QLineSeries();
-    //    seriesWomen->setColor(Qt::blue);
-    //    seriesWomen->setName("Femmes");
-
-    //    seriesMen = new QLineSeries();
-    //    seriesMen->setColor(Qt::red);
-    //    seriesMen->setName("Hommes");
-
-    //    seriesOthers = new QLineSeries();
-    //    seriesOthers->setColor(Qt::green);
-    //    seriesOthers->setName("Autres");
-
-    //    QChart *chartNbPerYearPerSex = new QChart();
-
-    ////    chartNbPerYearPerSex->addSeries(series);
-    ////    chartNbPerYearPerSex->setAnimationOptions(QChart::SeriesAnimations);
-
-    //    chartNbPerYearPerSex->addSeries(seriesWomen);
-    //    chartNbPerYearPerSex->addSeries(seriesMen);
-    //    chartNbPerYearPerSex->addSeries(seriesOthers);
-    //    chartNbPerYearPerSex->setTitle("");
-
-    //    // init axes
-    //    axisX = new QValueAxis();
-    //    axisX->setTitleText("Années");
-    //    axisX->setLabelFormat("%i");
-    //    axisX->setTickCount(-1);
-    //    axisX->setRange(1900,2018);
-    //    axisX->setTitleVisible(true);
-
-    //    axisY = new QValueAxis();
-    //    axisY->setTitleText("log(Nombre)");
-    //    axisY->setLabelFormat("%i");
-    ////    axisY->setBase(1.5);
-    //    axisY->setMinorTickCount(-1);
-    //    axisY->setTitleVisible(true);
-    ////    axisY->setRange(std::numeric_limits<qreal>::epsilon(),300000);
-    //    axisY->setRange(0,11);
-
-    //    // add axes to charts
-    //    chartNbPerYearPerSex->addAxis(axisX, Qt::AlignBottom);
-    //    chartNbPerYearPerSex->addAxis(axisY, Qt::AlignRight);
-
-    //    // attach axes
-    //    seriesWomen->attachAxis(axisX);
-    //    seriesWomen->attachAxis(axisY);
-
-    //    seriesMen->attachAxis(axisX);
-    //    seriesMen->attachAxis(axisY);
-
-    ////    QStringList categories;
-    ////    for(int ii = 1900; ii <= 2018; ++ii){
-    ////        categories << QString::number(ii);
-    ////    }
-
-    ////    QBarCategoryAxis *axisX = new QBarCategoryAxis();
-    ////    axisX->append(categories);
-    ////    chartNbPerYearPerSex->addAxis(axisX, Qt::AlignBottom);
-    ////    series->attachAxis(axisX);
-
-    ////    QValueAxis *axisY = new QValueAxis();
-    ////    chartNbPerYearPerSex->addAxis(axisY, Qt::AlignLeft);
-    ////    series->attachAxis(axisY);
-
-    //    // init chart view
-    //    chartView = new QChartView(chartNbPerYearPerSex);
-    //    chartView->setRenderHint(QPainter::Antialiasing);
-
-    //    ui.hlYearsCurve->addWidget(chartView);
-
-}
-
-void AllFirstNamesMW::init_ui_map(){
-    mapW = new MapW(ui.hlMap);
-}
 
 void AllFirstNamesMW::init_connections(){
 
@@ -312,59 +276,89 @@ void AllFirstNamesMW::init_connections(){
         if(value > ui.sbMaxNbLetters->value()){
             ui.sbMinNbLetters->setValue(ui.sbMaxNbLetters->value());
         }
-        update_filter_settings_from_ui();
+        update_filters_settings_from_ui();
     });
     connect(ui.sbMaxNbLetters,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](int value){
         if(value < ui.sbMinNbLetters->value()){
             ui.sbMaxNbLetters->setValue(ui.sbMinNbLetters->value());
         }
-        update_filter_settings_from_ui();
+        update_filters_settings_from_ui();
     });
-    connect(ui.sbAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filter_settings_from_ui();});
-    connect(ui.sbLastAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filter_settings_from_ui();});
-    connect(ui.sbPeakYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filter_settings_from_ui();});
+    connect(ui.sbAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_settings_from_ui();});
+    connect(ui.sbLastAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_settings_from_ui();});
+    connect(ui.sbPeakYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_settings_from_ui();});
     // # line edit
-    connect(ui.leStartsBy, &QLineEdit::textChanged, this, [&](){update_filter_settings_from_ui();});
-    connect(ui.leEndsBy, &QLineEdit::textChanged, this, [&](){update_filter_settings_from_ui();});
-    connect(ui.leContains, &QLineEdit::textChanged, this, [&](){update_filter_settings_from_ui();});
-    connect(ui.leDoNotContain, &QLineEdit::textChanged, this, [&](){update_filter_settings_from_ui();});
+    connect(ui.leStartsBy, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
+    connect(ui.leEndsBy, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
+    connect(ui.leContains, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
+    connect(ui.leDoNotContain, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
     connect(ui.leLastName, &QLineEdit::textChanged, this, [&](){update_displayed_info();});
+    connect(ui.leDep, &QLineEdit::textChanged, this, [&](){
+        ui.leDep->blockSignals(true);
+        ui.leDep->setText(ui.leDep->text().replace(";;",";"));
+        ui.leDep->blockSignals(false);
+        update_filters_settings_from_ui();
+    });
     // # check boxes
-    connect(ui.cbFiltersLetters, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbNbLetters, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbContains, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbDoNotContain, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbStartsBy, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbEndsBy, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFiltersGender, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbOnlyFemale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbOnlyMale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbOnlyOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbMajorFemale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbMajorMale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbMajorOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFemaleMale, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbFiltersLetters, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbNbLetters, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbContains, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbDoNotContain, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbStartsBy, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbEndsBy, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbFiltersGender, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOnlyFemale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOnlyMale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOnlyOther, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbMajorFemale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbMajorMale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbMajorOther, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbFemaleMale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
     // connect(ui.cbFemaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
     // connect(ui.cbMaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFiltersPopDep, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFiltersYears, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbLastAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbPeakYear, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbFiltersPopDep, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbFiltersYears, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbLastAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbPeakYear, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
     // # comboboxes
-    connect(ui.cbOpeAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbOpeLastAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbOpePeakYear, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbOpePer, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbPopPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filter_settings_from_ui();});
+    connect(ui.cbOpeAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOpeLastAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOpePeakYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOpePer, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbPopPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbOpeDep, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
+    connect(ui.cbPopDep, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
     // # radiobutton
-    connect(ui.rbSortAZ,   &QRadioButton::toggled, this, [&](){update_filter_settings_from_ui();});
-    connect(ui.rbSortZA,   &QRadioButton::toggled, this, [&](){update_filter_settings_from_ui();});
-    connect(ui.rbSortPopI, &QRadioButton::toggled, this, [&](){update_filter_settings_from_ui();});
-    connect(ui.rbSortPopS, &QRadioButton::toggled, this, [&](){update_filter_settings_from_ui();});
+    connect(ui.rbSortAZ,   &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
+    connect(ui.rbSortZA,   &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
+    connect(ui.rbSortPopI, &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
+    connect(ui.rbSortPopS, &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
+    // # pushbuttons
+    connect(ui.pbAddDep, &QPushButton::clicked, this, [&]{
+
+        auto newDep = QString::number(std::get<1>(departments.data[ui.cbDep->currentIndex()]).v);
+        auto currentTxt = ui.leDep->text();
+        if(currentTxt.length() == 0){
+            ui.leDep->setText(newDep);
+        }else{
+            for(auto depStr : currentTxt.split(";")){
+                if(depStr == newDep){
+                    return;
+                }
+            }
+
+            if(currentTxt[currentTxt.size()-1] == ';'){
+                ui.leDep->setText(currentTxt % newDep);
+            }else{
+                ui.leDep->setText(currentTxt % QSL(";") % newDep);
+            }
+        }
+        update_filters_settings_from_ui();
+    });
 
     // # list view names
     connect(filteredNamesV, &QListView::entered, this, [&](const QModelIndex &index){
@@ -372,7 +366,7 @@ void AllFirstNamesMW::init_connections(){
             return;
         }
         FirstNameV n{data.filteredNames[index.row()]};
-        if(data.filteredNamesMask.count(n) == 0){
+        if(data.namesState.count(n) == 0){
             return;
         }
         data.currentName = n;
@@ -381,12 +375,55 @@ void AllFirstNamesMW::init_connections(){
     connect(filteredNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
 
         FirstNameV n{data.filteredNames[index.row()]};
-        if(data.filteredNamesMask.count(n) == 0){
+        if(data.namesState.count(n) == 0){
             return;
         }
         data.currentName = n;
         update_displayed_info();
     });
+
+    connect(savedNamesV, &QListView::entered, this, [&](const QModelIndex &index){
+        if(!listSavedMousePressed){
+            return;
+        }
+        FirstNameV n{data.savedNames[index.row()]};
+        if(data.namesState.count(n) == 0){
+            return;
+        }
+        data.currentName = n;
+        update_displayed_info();
+    });
+    connect(savedNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
+
+        FirstNameV n{data.savedNames[index.row()]};
+        if(data.namesState.count(n) == 0){
+            return;
+        }
+        data.currentName = n;
+        update_displayed_info();
+    });
+
+    connect(removedNamesV, &QListView::entered, this, [&](const QModelIndex &index){
+        if(!listRemovedMousePressed){
+            return;
+        }
+        FirstNameV n{data.removedNames[index.row()]};
+        if(data.namesState.count(n) == 0){
+            return;
+        }
+        data.currentName = n;
+        update_displayed_info();
+    });
+    connect(removedNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
+
+        FirstNameV n{data.removedNames[index.row()]};
+        if(data.namesState.count(n) == 0){
+            return;
+        }
+        data.currentName = n;
+        update_displayed_info();
+    });
+
 
 
 
@@ -499,22 +536,24 @@ void AllFirstNamesMW::init_connections_colors(){
 
 void AllFirstNamesMW::init_data(){
 
+    Bench::start("[init_data]");
+
     if(!data.init()){
         return;
     }
 
-
+    Bench::stop();
     Bench::display();
     Bench::reset();
 
 
-    // update ui from data
-//    update_ui_map();
-//    update_ui_curves();
-
-
     // update lists
-    update_filter_settings_from_ui();
+    update_ui_from_settings();
+
+    update_filters_settings_from_ui(); // temp
+
+
+    // read list files
 //    update_saved_list();
 //    update_removed_list();
 //    update_displayed_info();
@@ -522,210 +561,6 @@ void AllFirstNamesMW::init_data(){
     delete ui.laLoading;
     delete ui.pbLoading;
 
-////    Bench::stop();
-////    Bench::start("[UI 2]");
-
-
-//    // 35009
-
-//    //    for(const auto& info : namesInfo){
-//    //        qDebug() << info.first.v << info.second.id << info.second.infos.size();
-//    //    }
-
-//    //    QString line = "-";
-//    //    while(line.length() > 0){
-//    //        line = inC.readLine();
-//    //    }
-
-
-//    //    Bench::start("  [splitRef]");
-//    //    lines = all.splitRef("\n", Qt::SkipEmptyParts);
-//    //    Bench::stop();
-//    Bench::display();
-//    //        qDebug() << "lines: " << lines.size();
-
-//    return;
-
-//    ui.pbLoading->setValue(17);
-//    wait_process(10);
-
-//    //    Bench::start("  [parse]");
-
-//    //parseId.resize(static_cast<size_t>(lines.size()));
-//    //std::iota(std::begin(parseId), std::end(parseId), 0);
-
-//    //        parsedInfos.resize(static_cast<size_t>(lines.size()));
-
-
-
-
-
-//    //        std::for_each(std::execution::par_unseq, std::begin(parseId), std::end(parseId), [&](int id){
-
-//    //            if(lines[id].count(lineSep) != 4){
-//    //                parsedInfos[static_cast<size_t>(id)] = {};
-//    //                return; // invalid line
-//    //            }
-//    //            parsedInfos[static_cast<size_t>(id)] = StrToData::to_line_info(lines[id]);
-//    //        });
-
-//    ui.pbLoading->setValue(47);
-//    wait_process(10);
-//    //    Bench::stop();
-
-
-//    return;
-
-//    //        qDebug() << "parsedInfos " << parsedInfos.size();
-
-//    //    Bench::start("  [init map test]");
-
-//    // ##################### START TEST
-
-//    //        namesInfos.reserve(35000);
-//    //        std::unordered_map<size_t, std::vector<const LineInfo*>> infos;
-
-//    //        for(const auto &info : parsedInfos){
-//    //            if(namesId.count(info.firstName.v) == 0){
-//    //                size_t id = namesId.size();
-//    //                namesId[info.firstName.v] = id;//namesInfos.size();
-//    //                infos[id] = {&info};
-
-//    //////                std::cout << id << " ";
-//    ////                auto a = NameInfo{id, info};
-//    //////                std::cout << a.firstName.v.toStdString() << " | ";
-//    ////                namesInfos.push_back(a);
-//    //////                namesInfos.emplace_back(NameInfo{id, info});
-//    //            }else{
-//    //                size_t id = namesId[info.firstName.v];
-//    //                infos[id].emplace_back(&info);
-//    //////                namesInfos[namesId[info.firstName.v]].update(info);
-//    //            }
-//    //        }
-
-
-
-
-//    //        qDebug() <<  "end " << namesInfos.size();
-//    return;
-
-
-//    //        std::fill(std::begin(countPerPeriod), std::end(countPerPeriod), 0);
-//    //        std::fill(std::begin(countPerDepartment), std::end(countPerDepartment), 0);
-
-//    //        std::vector<int> idN;
-//    //        idN.resize(static_cast<size_t>(namesInfos.size()));
-//    //        std::iota(std::begin(idN), std::end(idN), 0);
-//    //        std::for_each(std::execution::par_unseq, std::begin(idN), std::end(idN), [&](int id){
-
-//    //            auto info = &namesInfos[static_cast<size_t>(id)];
-
-//    //            // count nb per sex
-//    //            countPerSex[0] += info->countPerSex[0]; // female
-//    //            countPerSex[1] += info->countPerSex[1]; // male
-//    //            countPerSex[2] += info->countPerSex[2]; // other
-
-//    //            // count nb per period
-//    //            for(size_t ii = 0; ii < static_cast<size_t>(Period::SizeEnum); ++ii){
-//    //                countPerPeriod[ii] += info->countPerPeriod[ii];
-//    //            }
-
-//    //            // count nb per department
-//    //            for(size_t ii = 0; ii < static_cast<size_t>(DepartmentC::SizeEnum); ++ii){
-//    //                countPerDepartment[ii] += std::get<1>(info->departmentsInfo[ii]).v;//info->nbPerDepartment_test[ii];
-//    //            }
-//    //        });
-
-
-//    //        std::fill(std::begin(maxNameNbPerPeriod), std::end(maxNameNbPerPeriod), 0);
-//    //        std::fill(std::begin(maxNameNbPerDepartment), std::end(maxNameNbPerDepartment), 0);
-
-//    //        for(const auto &info : namesInfos){
-
-//    //            // find max nb name per period
-//    //            for(size_t ii = 0; ii < static_cast<size_t>(Period::SizeEnum); ++ii){
-//    //                if(info.countPerPeriod[ii] > maxNameNbPerPeriod[ii]){
-//    //                    maxNameNbPerPeriod[ii] = info.countPerPeriod[ii];
-//    //                }
-//    //            }
-
-//    //            // find max nb name per department
-//    //            for(size_t ii = 0; ii < static_cast<size_t>(DepartmentC::SizeEnum); ++ii){
-//    //                if(std::get<1>(info.departmentsInfo[ii]).v > maxNameNbPerDepartment[ii]){
-//    //                    maxNameNbPerDepartment[ii] = std::get<1>(info.departmentsInfo[ii]).v;
-//    //                }
-//    //            }
-//    //        }
-
-//    //        maxPeriodsNameNb_test = *std::max_element(std::begin(maxNameNbPerPeriod), std::end(maxNameNbPerPeriod));
-//    //        maxDepartmentsNameNb_test = *std::max_element(std::begin(maxNameNbPerDepartment), std::end(maxNameNbPerDepartment));
-
-//    //        // sort popularity per period
-//    //        for(size_t ii = 0; ii < static_cast<size_t>(Period::SizeEnum); ++ii){
-
-//    //            auto &npPerPeriod = namesPopularityPerPeriod[ii];
-
-//    //            npPerPeriod.resize(namesInfos.size());
-//    //            std::iota(std::begin(npPerPeriod),std::end(npPerPeriod),0);
-
-//    //            std::sort(std::execution::par_unseq, std::begin(npPerPeriod), std::end(npPerPeriod), [&](size_t a, size_t b) -> bool{
-//    //                return namesInfos[a].countPerPeriod[ii] > namesInfos[b].countPerPeriod[ii];
-//    //            });
-//    //        }
-
-//    //        // popularity per period
-//    //        std::array<size_t,static_cast<size_t>(Period::SizeEnum)> idP;
-//    //        std::iota(std::begin(idP),std::end(idP),0);
-//    //        std::for_each(std::execution::par_unseq, std::begin(idP), std::end(idP), [&](size_t ii){
-
-//    //            for(size_t jj = 0; jj < namesPopularityPerPeriod[ii].size(); ++jj){
-
-//    //                const auto nameId = namesPopularityPerPeriod[ii][jj];
-//    //                auto &pop = namesInfos[nameId].popularityPerPeriod[ii];
-
-//    //                float percentage = 1.f-1.f*jj/namesPopularityPerPeriod[ii].size();
-//    //                if(percentage >= get_percentage(Popularity::Huge).v){
-//    //                    pop = Popularity::Huge;
-//    //                }else if(percentage >= get_percentage(Popularity::Very_hight).v){
-//    //                    pop = Popularity::Very_hight;
-//    //                }else if(percentage >= get_percentage(Popularity::Hight).v){
-//    //                    pop = Popularity::Hight;
-//    //                }else if(percentage >= get_percentage(Popularity::Average).v){
-//    //                    pop = Popularity::Average;
-//    //                }else if(percentage >= get_percentage(Popularity::Low).v){
-//    //                    pop = Popularity::Low;
-//    //                }else if(percentage >= get_percentage(Popularity::Rare).v){
-//    //                    pop = Popularity::Rare;
-//    //                }else if(percentage >= get_percentage(Popularity::Very_rare).v){
-//    //                    pop = Popularity::Very_rare;
-//    //                }else{
-//    //                    pop = Popularity::Inexistant;
-//    //                }
-//    //            }
-//    //        });
-
-//    //        // ranking per department per name
-//    //        std::for_each(std::execution::par_unseq, std::begin(namesInfos), std::end(namesInfos), [&](NameInfo &info){
-
-//    //            std::sort(std::execution::seq, std::begin(info.departmentsInfo), std::end(info.departmentsInfo), [&](const auto &r1, const auto &r2) -> bool{
-//    //                return
-//    //                    std::get<1>(r1).v > std::get<1>(r2).v;
-//    //            });
-
-//    //            for(size_t ii = 0; ii < info.departmentsInfo.size(); ++ii){
-//    //                std::get<2>(info.departmentsInfo[ii]).v = ii;
-//    //            }
-
-//    //            std::sort(std::execution::seq, std::begin(info.departmentsInfo), std::end(info.departmentsInfo), [&](const auto &r1, const auto &r2) -> bool{
-//    //                return get_id(std::get<0>(r1)) < get_id(std::get<0>(r2));
-//    //            });
-
-//    //        });
-
-//    //        const auto &t = namesInfos[namesId["Marie"]];
-//    //        for(size_t ii = 0; ii < t.departmentsInfo.size(); ++ii){
-//    //            std::cout << ii << " " << get_department_id(std::get<0>(t.departmentsInfo[ii])) << " " << std::get<1>(t.departmentsInfo[ii]).v << " " << std::get<2>(t.departmentsInfo[ii]).v << "\n";
-//    //        }
 
 
 //    ui.pbLoading->setValue(88);
@@ -939,13 +774,26 @@ bool AllFirstNamesMW::eventFilter(QObject *obj, QEvent *event){
 
     if(obj == filteredNamesV->viewport()){
         if(event->type() == QEvent::MouseButtonPress){
-            qDebug() << "pressed";
             listFilteredMousePressed = true;
         }else if(event->type() == QEvent::MouseButtonRelease){
-            qDebug() << "released";
             listFilteredMousePressed = false;
         }
     }
+    if(obj == savedNamesV->viewport()){
+        if(event->type() == QEvent::MouseButtonPress){
+            listSavedMousePressed = true;
+        }else if(event->type() == QEvent::MouseButtonRelease){
+            listSavedMousePressed = false;
+        }
+    }
+    if(obj == removedNamesV->viewport()){
+        if(event->type() == QEvent::MouseButtonPress){
+            listRemovedMousePressed = true;
+        }else if(event->type() == QEvent::MouseButtonRelease){
+            listRemovedMousePressed = false;
+        }
+    }
+
 //    if (obj == ui->listView->viewport() && event->type() == QEvent::MouseButtonDblClick)
 //    {
 //        QMouseEvent *ev = static_cast<QMouseEvent *>(event);
@@ -965,32 +813,25 @@ AllFirstNamesMW::~AllFirstNamesMW(){
 
     // save session
     settings.save_settings_file(Paths::settingsFilePath);
-//    save_saved_names_file(Paths::savedNamesFilePath);
+    save_saved_names_file(Paths::savedNamesFilePath);
 //    save_removed_names_file(Paths::removedNamesFilePath);
 }
 
 
-void AllFirstNamesMW::update_filtered_list(std::shared_ptr<QStringList> names){
+void AllFirstNamesMW::update_filtered_list(){
 
-    // data.filteredNames
+    ui.twListNames->setTabText(0, QString("Filtrés (") % QString::number(data.countFiltered) % QSL(")"));
 
-    Bench::start("[update_filtered_list]1");
-    ui.twListNames->setTabText(0, QString("Filtrés (") % QString::number(names->size()) % QSL(")"));
-
-    filteredNamesM.update();
+    Bench::start("[update_filtered_list]");
+    filteredNamesM->update();
     filteredNamesV->viewport()->update();
-
     Bench::stop();
 
     update_displayed_info();
-
-
-    Bench::display();
-    Bench::reset();
 }
 
 
-void AllFirstNamesMW::update_filter_settings_from_ui(){
+void AllFirstNamesMW::update_filters_settings_from_ui(){
 
     ui.wSubGender->setEnabled(ui.cbFiltersGender->isChecked());
     ui.wSubLetters->setEnabled(ui.cbFiltersLetters->isChecked());
@@ -1051,6 +892,23 @@ void AllFirstNamesMW::update_filter_settings_from_ui(){
     settings.filters.periodEqual             = ui.cbOpePer->currentIndex() == 1;
     settings.filters.periodAtLast            = ui.cbOpePer->currentIndex() == 2;
     settings.filters.popPeriod               = static_cast<Popularity>(ui.cbPopPeriod->currentIndex());
+    // department
+    settings.filters.filterPopDep            = ui.cbFiltersPopDep->isChecked();
+    settings.filters.depAtLeast              = ui.cbOpeDep->currentIndex() == 0;
+    settings.filters.depEqual                = ui.cbOpeDep->currentIndex() == 1;
+    settings.filters.depAtLast               = ui.cbOpeDep->currentIndex() == 2;
+    settings.filters.popDep                  = static_cast<Popularity>(ui.cbPopDep->currentIndex());
+    settings.filters.insideDepartments.clear();
+    for(auto split : ui.leDep->text().split(";")){
+        if(split == ";"){
+            continue;
+        }
+        if(auto dep = get_department(DepartmentId{split.toInt()}); dep.has_value()){
+            settings.filters.insideDepartments.insert(dep.value());
+        }
+    }
+
+    // ...
     // sortings
     settings.filters.sortAZ                  = ui.rbSortAZ->isChecked();
     settings.filters.sortZA                  = ui.rbSortZA->isChecked();
@@ -1140,22 +998,32 @@ void AllFirstNamesMW::update_filter_settings_from_ui(){
 //    ui.lwRemoved->addItems(removedNamesStr);
 //}
 
+
+
+bool AllFirstNamesMW::save_saved_names_file(const QString &path) const{
+
+    QFile savedFile(path);
+    if(!savedFile.open(QFile::WriteOnly | QIODevice::Text)){
+        qWarning() << "Cannot open saved names file at path " % path;
+        return false;
+    }
+
+    QTextStream fileStream(&savedFile);
+    for(const auto &savedName : data.savedNames){
+        fileStream << savedName.v % "\n";
+    }
+
+    return true;
+}
+
+
 void AllFirstNamesMW::update_displayed_info(){
 
-
     if(data.currentName.v.length() == 0){
-        for(const auto &m : data.filteredNamesMask){
-            if(!m.second){
-                data.currentName = m.first;
-                break;
-            }
-        }
-    }
-
-    if(data.currentName.v.length() == 0){
-        qDebug() << "no name available";
         return;
     }
+
+    Bench::start("[update_displayed_info]");
 
 
     const auto gr = data.pData.infosPerName[data.currentName].genderRepartition;
@@ -1189,31 +1057,39 @@ void AllFirstNamesMW::update_displayed_info(){
         ui.laPeakYear->setText("Inconnue");
     }
 
+    ui.laDep->setText(from_view(get_name(nameInfo.mostCommonDepartment)));
+
+    // infos per period
     size_t ii = 0;
     for(const auto &period : periods.data){
-
         const auto p = std::get<0>(period);
         const auto pId = static_cast<std::uint8_t>(p);
-
-        tableInfoWidgets[ii][0]->setText(QString::number(nameInfo.countPerPeriod[pId].v));
-        tableInfoWidgets[ii][1]->setText(QString::number(data.pData.infosPerGender[Gender::Female].countNamePeriod[p][nameInfo.name].v));
-        tableInfoWidgets[ii][2]->setText(QString::number(data.pData.infosPerGender[Gender::Male].countNamePeriod[p][nameInfo.name].v));
-
-        auto order = nameInfo.orderPerPeriod[pId].v;
-        tableInfoWidgets[ii][3]->setText(QString::number(order+1));
-
-        if(nameInfo.countPerPeriod[pId].v > 0){
-            tableInfoWidgets[ii][4]->setText(QString::number(1.f*order/data.pData.infosPerPeriod[p].total.v));
-        }else{
-            tableInfoWidgets[ii][4]->setText("-");
-        }
-
-        tableInfoWidgets[ii][5]->setText(from_view(get_name(nameInfo.popularityPerPeriod[pId])));
-
+        auto &lw = tablePeriodsInfoWidgets[ii];
+        lw[0]->setText(QString::number(nameInfo.countPerPeriod[pId].v));
+        lw[1]->setText(QString::number(data.pData.infosPerGender[Gender::Female].countNamePeriod[p][nameInfo.name].v));
+        lw[2]->setText(QString::number(data.pData.infosPerGender[Gender::Male].countNamePeriod[p][nameInfo.name].v));
+        lw[3]->setText(QString::number(nameInfo.orderPerPeriod[pId].v+1));
+        lw[4]->setText(from_view(get_name(nameInfo.popularityPerPeriod[pId])));
         ++ii;
     }
 
+    // infos per department
+    ii = 0;
+    for(const auto &dep : departments.data){
+        const auto d = std::get<0>(dep);
+        if(d == Department::Inconnu){
+            continue;
+        }
+        auto &lw = tableDepartmentsInfoWidgets[ii];
+        lw[0]->setText(QString::number(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].count.v));
+        lw[1]->setText(QString::number(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].nbFemales.v));
+        lw[2]->setText(QString::number(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].nbMales.v));
+        lw[3]->setText(QString::number(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].order.v+1));
+        lw[4]->setText(from_view(get_name(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].popularity)));
+        ++ii;
+    }
 
+    // curves
     size_t max = 0;
     std::vector<double> years;
     for(size_t ii = 1900; ii <= 2020; ++ii){
@@ -1246,80 +1122,9 @@ void AllFirstNamesMW::update_displayed_info(){
         curveW->set_points(years, counts);
     }
 
-
-//        // #############################################################################
-////        if(currentInfo->nbPerYearPerSex[Sex::Female].count({0}) != 0){
-////            ui.laWomanUnknowYear->setText(QString::number(currentInfo->nbPerYearPerSex[Sex::Female][{0}]));
-////        }else{
-////            ui.laWomanUnknowYear->setText("0");
-////        }
-
-////        if(currentInfo->nbPerYearPerSex[Sex::Male].count({0}) != 0){
-////            ui.laManUnknowYear->setText(QString::number(currentInfo->nbPerYearPerSex[Sex::Male][{0}]));
-////        }else{
-////            ui.laManUnknowYear->setText("0");
-////        }
-
-////        if(currentInfo->nbPerYearPerSex[Sex::Other].count({0}) != 0){
-////            ui.laOtherUnknowYear->setText(QString::number(currentInfo->nbPerYearPerSex[Sex::Other][{0}]));
-////        }else{
-////            ui.laOtherUnknowYear->setText("0");
-////        }
-
-
-
-////        ui.lwCurrentNameTotalPerYear->clear();
-
-////        std::map<Year, std::tuple<int,int,int>> nbNamesPerYear;
-////        for(auto &nb : currentInfo->nbPerYearPerSex[Sex::Male]){
-////            nbNamesPerYear[nb.first] = {0,nb.second, 0};
-////        }
-////        for(auto &nb : currentInfo->nbPerYearPerSex[Sex::Female]){
-////            if(nbNamesPerYear.count(nb.first) == 0){
-////                nbNamesPerYear[nb.first] = {nb.second,0, 0};
-////            }else{
-////                nbNamesPerYear[nb.first] = {nb.second, std::get<1>(nbNamesPerYear[nb.first]), 0};
-////            }
-////        }
-////        for(auto &nb : currentInfo->nbPerYearPerSex[Sex::Other]){
-////            if(nbNamesPerYear.count(nb.first) == 0){
-////                nbNamesPerYear[nb.first] = {0, 0, nb.second};
-////            }else{
-////                nbNamesPerYear[nb.first] = {std::get<0>(nbNamesPerYear[nb.first]), std::get<1>(nbNamesPerYear[nb.first]), nb.second};
-////            }
-////        }
-
-////        for(const auto &nbPerYear : nbNamesPerYear){
-
-////            QString year;
-////            if(nbPerYear.first.v == 0){
-////                // year = "année inconnue";
-////                continue;
-////            }else{
-////                year = QString::number(nbPerYear.first.v);
-////            }
-
-////            ui.lwCurrentNameTotalPerYear->addItem(
-////                year % " -> F: " % QString::number(std::get<0>(nbPerYear.second)) %
-////                " M: " % QString::number(std::get<1>(nbPerYear.second)) %
-////                " O: 0"
-////            );
-////        }
-
-//        if(savedNames.count(currentInfo->firstName) != 0){
-//            ui.pbKeepCurrentName->setEnabled(false);
-//        }else{
-//            ui.pbKeepCurrentName->setEnabled(true);
-//        }
-
-//        if(removedNames.count(currentInfo->firstName) != 0){
-//            ui.pbRemoveCurrentName->setEnabled(false);
-//        }else{
-//            ui.pbRemoveCurrentName->setEnabled(true);
-//        }
-
-//        ui.pbNext->setEnabled(true);
-
+    Bench::stop();
+    Bench::display();
+    Bench::reset();
 
 ////        QVector<QPointF> womenPoints,menPoints,othersPoints;
 ////        womenPoints.resize(2019-1900);
@@ -1802,23 +1607,6 @@ void AllFirstNamesMW::update_displayed_info(){
 //}
 
 
-
-
-//bool MainWindow::save_saved_names_file(const QString &path) const{
-
-//    QFile savedFile(path);
-//    if(!savedFile.open(QFile::WriteOnly | QIODevice::Text)){
-//        qWarning() << "Cannot save saved names file at path " % path;
-//        return false;
-//    }
-
-//    QTextStream fileStream(&savedFile);
-//    for(const auto &savedName : savedNames){
-//        fileStream << savedName.first.v % "\n";
-//    }
-
-//    return true;
-//}
 
 //bool MainWindow::save_removed_names_file(const QString &path) const{
 

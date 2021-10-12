@@ -4,58 +4,34 @@
 // std
 #include <mutex>
 
-// Qt
-#include <QObject>
-#include <QDebug>
-
-// utility
-#include "utility/benchmark.hpp"
 // data
 #include "data/filters.hpp"
 
 namespace tool {
 
-
 class ListWorker : public QObject{
     Q_OBJECT
 public:
 
-    ListWorker(){
-
-    }
+    ListWorker(){}
 
 public slots:
 
     void apply_filter(Data *data, FilterSettings filterS){
 
         lock.lock();
-
-        tool::Bench::start("apply_filter");
-
-        Filters filters;
-        filters.apply(filterS, *data);
-
-//        data->filteredNames
-
-        auto names = std::make_shared<QStringList>();
-        names->reserve(data->countFiltered);
-        for(size_t ii = 0; ii < data->countFiltered; ++ii){
-            *names << data->filteredNames[ii].v.toString();
-        }
-
-        tool::Bench::stop();
-
-        qDebug() << "names filtered " << names->size();
+            filters.apply(filterS, *data);
         lock.unlock();
-        emit list_filtered_signal(std::move(names));
+
+        emit list_filtered_signal();
     }
 
 signals:
 
-    void list_filtered_signal(std::shared_ptr<QStringList> names);
+    void list_filtered_signal();
 
 private:
     std::mutex lock;
-
+    Filters filters;
 };
 }

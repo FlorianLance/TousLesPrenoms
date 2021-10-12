@@ -15,6 +15,7 @@
 #include <QTime>
 #include <QThread>
 #include <QButtonGroup>
+#include <QListView>
 //#include <QtCharts>
 
 // local
@@ -55,13 +56,14 @@ public:
     // ui
     // # init
     void init_ui();
-    void init_ui_filters();
-    void init_ui_colors();
+    void init_ui_filters();    
     void init_ui_curves();
     void init_ui_map();
+    void init_ui_settings();
     // # update
     void update_ui_curves(){}
     void update_ui_map(){}
+    void update_ui_from_settings();
     // connections
     void init_connections();
     void init_connections_colors();
@@ -69,13 +71,25 @@ public:
     // data
     void init_data();
 
-    // settings
-    void update_ui_from_settings();
+
+
+    // filters
+    void update_filters_settings_from_ui();
+
+    // I/O
+    //    bool save_settings_file(const QString &path) const;
+    bool save_saved_names_file(const QString &path) const;
+    //    bool save_removed_names_file(const QString &path) const;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);//in header
 
 public slots:
+
+
+    void update_filtered_list();
+    void update_displayed_info();
+
 
     // actions
 //    void keep_current_name();
@@ -88,17 +102,12 @@ public slots:
     // lists and display
 //    bool is_name_filtered(const NameInfo &info);
 
-    void update_filter_settings_from_ui();
-    void update_filtered_list(std::shared_ptr<QStringList> names);
 
 //    void update_saved_list();
 //    void update_removed_list();
-    void update_displayed_info();
 
-    // I/O
-//    bool save_settings_file(const QString &path) const;
-//    bool save_saved_names_file(const QString &path) const;
-//    bool save_removed_names_file(const QString &path) const;
+
+
 
 signals:
 
@@ -115,8 +124,16 @@ public:
     // # widgets
     Ui::AllFirstNameW ui;
     MapW *mapW = nullptr;
+
     QListView *filteredNamesV = nullptr;
-    ui::ListNamesM filteredNamesM;
+    std::unique_ptr<ui::ListNamesM> filteredNamesM = nullptr;
+
+    QListView *savedNamesV = nullptr;
+    std::unique_ptr<ui::ListNamesM> savedNamesM = nullptr;
+
+    QListView *removedNamesV = nullptr;
+    std::unique_ptr<ui::ListNamesM> removedNamesM = nullptr;
+
     CurveW *curveW = nullptr;
 
     // # forms
@@ -151,11 +168,14 @@ public:
     QThread listWorkerT;
     std::unique_ptr<ListWorker> listWorker;
 
-    std::vector<std::vector<QLabel*>> tableInfoWidgets;
+    std::vector<std::vector<QLabel*>> tablePeriodsInfoWidgets;
+    std::vector<std::vector<QLabel*>> tableDepartmentsInfoWidgets;
 
 private:
 
     bool listFilteredMousePressed = false;
+    bool listSavedMousePressed = false;
+    bool listRemovedMousePressed = false;
 
     static inline const QString firstNameStartStyle = QSL("<html><head/><body><p align=\"center\"><span style=\" font-size:36pt;\"> ");
     static inline const QString lastNameStartStyle = QSL("<html><head/><body><p align=\"center\"><span style=\" font-size:24pt;\"> ");

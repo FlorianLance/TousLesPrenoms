@@ -10,134 +10,156 @@ using namespace tool;
 
 bool Filters::filter_gender(const FilterSettings &s, const NameProcessedInfos &nameInfo) const{
 
-    if(s.filterGender){
+    if(!s.filterGender){
+        return true; // gender filtering disabled
+    }
 
-
-        // only
-        if(s.onlyFemale && nameInfo.genderRepartition == GenderRepartition::OnlyFemale){
-            return false;
-        }
-        if(s.onlyMale && nameInfo.genderRepartition == GenderRepartition::OnlyMale){
-            return false;
-        }
-        if(s.onlyOther && nameInfo.genderRepartition == GenderRepartition::OnlyOther){
-            return false;
-        }
-
-        // major
-        if(s.majorFemale && nameInfo.genderRepartition == GenderRepartition::MostlyFemale){
-            return false;
-        }
-        if(s.majorMale && nameInfo.genderRepartition == GenderRepartition::MostlyMale){
-            return false;
-        }
-        if(s.majorOther && nameInfo.genderRepartition == GenderRepartition::MostlyOther){
-            return false;
-        }
-
-        // balanced
-        if(s.femaleMale && nameInfo.genderRepartition == GenderRepartition::FemaleMale){
-            return false;
-        }
-        if(s.femaleOther && nameInfo.genderRepartition == GenderRepartition::FemaleOther){
-            return false;
-        }
-        if(s.maleOther && nameInfo.genderRepartition == GenderRepartition::MaleOther){
-            return false;
-        }
-
+    // if at least one criterion is valid, keep the name
+    // # only
+    if(s.onlyFemale && nameInfo.genderRepartition == GenderRepartition::OnlyFemale){
         return true;
     }
+    if(s.onlyMale && nameInfo.genderRepartition == GenderRepartition::OnlyMale){
+        return true;
+    }
+    if(s.onlyOther && nameInfo.genderRepartition == GenderRepartition::OnlyOther){
+        return true;
+    }
+    // # major
+    if(s.majorFemale && nameInfo.genderRepartition == GenderRepartition::MostlyFemale){
+        return true;
+    }
+    if(s.majorMale && nameInfo.genderRepartition == GenderRepartition::MostlyMale){
+        return true;
+    }
+    if(s.majorOther && nameInfo.genderRepartition == GenderRepartition::MostlyOther){
+        return true;
+    }
+    // # balanced
+    if(s.femaleMale && nameInfo.genderRepartition == GenderRepartition::FemaleMale){
+        return true;
+    }
+    if(s.femaleOther && nameInfo.genderRepartition == GenderRepartition::FemaleOther){
+        return true;
+    }
+    if(s.maleOther && nameInfo.genderRepartition == GenderRepartition::MaleOther){
+        return true;
+    }
+
+    // no criterion valid, drop the name
     return false;
 }
 
 bool Filters::filter_letters(const FilterSettings &s, FirstNameV firstNameV) const{
 
-    if(s.filterLetters){
-
-        if(filter_nb_letters(s, firstNameV)){
-            return true;
-        }
-        if(filter_contains(s, firstNameV)){
-            return true;
-        }
-        if(filter_do_not_contains(s, firstNameV)){
-            return true;
-        }
-        if(filter_starts_by(s, firstNameV)){
-            return true;
-        }
-        if(filter_ends_by(s, firstNameV)){
-            return true;
-        }
+    if(!s.filterLetters){
+        return true; // letter filtering disabled
     }
-    return false;
+
+    // if at least one criterion is invalid, drop the name
+    if(!filter_nb_letters(s, firstNameV)){
+        return false;
+    }
+    if(!filter_contains(s, firstNameV)){
+        return false;
+    }
+    if(!filter_do_not_contains(s, firstNameV)){
+        return false;
+    }
+    if(!filter_starts_by(s, firstNameV)){
+        return false;
+    }
+    if(!filter_ends_by(s, firstNameV)){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
 }
 
 
 bool Filters::filter_nb_letters(const FilterSettings &s, FirstNameV firstNameV) const{
 
-    if(s.nbLetters){
-        if(firstNameV.v.length() > s.maxLettersNb){
-            return true;
-        }
-        if(firstNameV.v.length() < s.minLettersNb){
-            return true;
-        }
+    if(!s.nbLetters){
+        return true; // nb letter filtering disabled
     }
-    return false;
+
+    // if at least one criterion is invalid, drop the name
+    if(firstNameV.v.length() > s.maxLettersNb){
+        return false;
+    }
+    if(firstNameV.v.length() < s.minLettersNb){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
 }
 
 bool Filters::filter_contains(const FilterSettings &s, FirstNameV firstNameV) const{
 
-    if(s.contains){
+    if(!s.contains){
+        return true; // contains letter filtering disabled
+    }
 
-        // contains
-        if(s.containsTextes.size() > 0){
 
-            bool contains = true;
-            for(const auto &text : s.containsTextes){
-                if(!firstNameV.v.contains(text, Qt::CaseSensitivity::CaseInsensitive)){
-                    contains = false;
-                    break;
-                }
+    // contains
+    if(s.containsTextes.size() > 0){
+
+        bool contains = true;
+        for(const auto &text : s.containsTextes){
+            if(!firstNameV.v.contains(text, Qt::CaseSensitivity::CaseInsensitive)){
+                contains = false;
+                break;
             }
+        }
 
-            if(!contains){
-                return true;
-            }
+        if(!contains){
+            // at least one criterion is invalid, drop the name
+            return false;
         }
     }
 
-    return false;
+    // no criterion invalid, keep the name
+    return true;
 }
 
 bool Filters::filter_do_not_contains(const FilterSettings &s, FirstNameV firstNameV) const{
 
-    if(s.doNoContains){
+    if(!s.doNoContains){
+        return true; // do not contains letter filtering disabled
+    }
 
-        // do not contains
-        if(s.doNotContainsTextes.size() > 0){
+    // do not contains
+    if(s.doNotContainsTextes.size() > 0){
 
-            bool contains = false;
-            for(const auto &text : s.doNotContainsTextes){
-                if(firstNameV.v.contains(text, Qt::CaseSensitivity::CaseInsensitive)){
-                    contains = true;
-                    break;
-                }
-            }
-
-            if(contains){
-                return true;
+        bool contains = false;
+        for(const auto &text : s.doNotContainsTextes){
+            if(firstNameV.v.contains(text, Qt::CaseSensitivity::CaseInsensitive)){
+                contains = true;
+                break;
             }
         }
+
+        if(contains){
+            // at least one criterion is invalid, drop the name
+            return false;
+        }
     }
-    return false;
+
+    // no criterion invalid, keep the name
+    return true;
 }
 
 bool Filters::filter_starts_by(const FilterSettings &s, FirstNameV firstNameV) const{
 
-    if(s.startsBy){
+    if(!s.startsBy){
+        return true; // starts by letter filtering disabled
+    }
+
+
+    // starts by
+    if(s.startsByTextes.size() > 0){
 
         bool starts = false;
         for(const auto &text : s.startsByTextes){
@@ -148,15 +170,23 @@ bool Filters::filter_starts_by(const FilterSettings &s, FirstNameV firstNameV) c
         }
 
         if(!starts){
-            return true;
+            // at least one criterion is invalid, drop the name
+            return false;
         }
     }
-    return false;
+
+    // no criterion invalid, keep the name
+    return true;
 }
 
 bool Filters::filter_ends_by(const FilterSettings &s, FirstNameV firstNameV) const{
 
-    if(s.endsBy){
+    if(!s.endsBy){
+        return true; // ends by letter filtering disabled
+    }
+
+    // ends by
+    if(s.endsByTextes.size() > 0){
 
         bool ends = false;
         for(const auto &text : s.endsByTextes){
@@ -167,137 +197,282 @@ bool Filters::filter_ends_by(const FilterSettings &s, FirstNameV firstNameV) con
         }
 
         if(!ends){
-            return true;
+            // at least one criterion is invalid, drop the name
+            return false;
         }
     }
-    return false;
+
+    // no criterion invalid, keep the name
+    return true;
 }
 
 bool Filters::filter_years(const FilterSettings &s, const NameProcessedInfos &nameInfo) const{
 
-    if(s.filterYear){
+    if(!s.filterYear){
+        return true; // years filtering disabled
+    }
 
-        if(s.appearsBefore){
+    // if at least one criterion is invalid, drop the name
+    if(!filter_appears_before(s, nameInfo.intervalApparition)){
+        return false;
+    }
+    if(!filter_appears_during(s, nameInfo.intervalApparition)){
+        return false;
+    }
+    if(!filter_appears_after(s, nameInfo.intervalApparition)){
+        return false;
+    }
+    if(!filter_appears_unknow(s, nameInfo.intervalApparition)){
+        return false;
+    }
 
-            if(nameInfo.intervalApparition.start.v == -1){
-                return true;
-            }
+    if(!filter_peak_before(s, nameInfo.popularityPeak)){
+        return false;
+    }
+    if(!filter_peak_during(s, nameInfo.popularityPeak)){
+        return false;
+    }
+    if(!filter_peak_after(s, nameInfo.popularityPeak)){
+        return false;
+    }
+    if(!filter_peak_unknow(s, nameInfo.popularityPeak)){
+        return false;
+    }
 
-            if(s.appearsYear < nameInfo.intervalApparition.start.v){
-                return true;
-            }
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_appears_before(const FilterSettings &s, const Interval &apparitionInterval) const{
+
+    if(!s.appearsBefore){
+        return true; // appears before filtering disabled
+    }
+
+    // if at least one criterion is invalid, drop the name
+    if(apparitionInterval.start.v == -1){
+        return false;
+    }
+    if(s.appearsYear < apparitionInterval.start.v){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_appears_during(const FilterSettings &s, const Interval &apparitionInterval) const{
+
+    if(!s.appearsDuring){
+        return true; // appears during filtering disabled
+    }
+
+    if(apparitionInterval.start.v == -1){
+        return false;
+    }
+
+    if(s.appearsYear != apparitionInterval.start.v){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_appears_after(const FilterSettings &s, const Interval &apparitionInterval) const{
+
+    if(!s.appearsAfter){
+        return true; // appears after filtering disabled
+    }
+
+    if(apparitionInterval.end.v == -1){
+        return false;
+    }
+
+    if(s.appearsYear > apparitionInterval.end.v){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_appears_unknow(const FilterSettings &s, const Interval &apparitionInterval) const{
+
+    if(!s.appearsUnknow){
+        return true; // appears unknow filtering disabled
+    }
+
+    if(apparitionInterval.start.v != -1){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_peak_before(const FilterSettings &s, const Year &popularityPeak) const{
+
+    if(!s.peakBefore){
+        return true; // peak before filtering disabled
+    }
+
+    if(popularityPeak.v == -1){
+        return false;
+    }
+
+    if(s.peakYear < popularityPeak.v){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_peak_during(const FilterSettings &s, const Year &popularityPeak) const{
+
+    if(!s.peakDuring){
+        return true; // peak during filtering disabled
+    }
+
+    if(popularityPeak.v == -1){
+        return false;
+    }
+
+    if(s.peakYear != popularityPeak.v){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_peak_after(const FilterSettings &s, const Year &popularityPeak) const{
+
+    if(!s.peakAfter){
+        return true; // peak after filtering disabled
+    }
+
+    if(popularityPeak.v == -1){
+        return false;
+    }
+
+    if(s.peakYear > popularityPeak.v){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_peak_unknow(const FilterSettings &s, const Year &popularityPeak) const{
+
+    if(!s.peakUnknow){
+        return true; // peak unknow filtering disabled
+    }
+
+    if(popularityPeak.v != -1){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_popularity_period(const FilterSettings &s, const NameProcessedInfos &nameInfo) const{
+
+    if(!s.filterPopPeriod){
+        return true; // popularity period filtering disabled
+    }
+
+    const auto popularity = nameInfo.popularityPerPeriod[static_cast<int>(s.period)];
+    if(s.periodAtLeast && (popularity > s.popPeriod)){
+        return false;
+    }
+    if(s.periodEqual && (popularity != s.popPeriod)){
+        return false;
+    }
+    if(s.periodAtLast && (popularity < s.popPeriod)){
+        return false;
+    }
+
+    // no criterion invalid, keep the name
+    return true;
+}
+
+bool Filters::filter_popularity_department(const FilterSettings &s, FirstNameV firstNameV, const um<Department, DepartmentProcessedInfos> &infoPerDepartment) const{
+
+    if(!s.filterPopDep){
+        return true; // popularity department filtering disabled
+    }
+
+    for(const auto dep : s.insideDepartments){
+
+        const auto &infos = infoPerDepartment.at(dep).infosPerName;
+        if(!infos.contains(firstNameV)){
+            return false; // not sure yet...
         }
 
-        if(s.appearsDuring){
-
-            if(nameInfo.intervalApparition.start.v == -1){
-                return true;
-            }
-
-            if(s.appearsYear != nameInfo.intervalApparition.start.v){
-                return true;
-            }
+        const auto popularity = infos.at(firstNameV).popularity;
+        if(s.depAtLeast && (popularity > s.popDep)){
+            return false;
         }
-
-        if(s.appearsAfter){
-
-            if(nameInfo.intervalApparition.end.v == -1){
-                return true;
-            }
-
-            if(s.appearsYear > nameInfo.intervalApparition.end.v){
-                return true;
-            }
+        if(s.depEqual && (popularity != s.popDep)){
+            return false;
         }
-
-        if(s.appearsUnknow){
-            if(nameInfo.intervalApparition.start.v != -1){
-                return true;
-            }
-        }
-
-        if(s.peakBefore){
-
-            if(nameInfo.popularityPeak.v == -1){
-                return true;
-            }
-
-            if(s.peakYear < nameInfo.popularityPeak.v){
-                return true;
-            }
-        }
-
-        if(s.peakDuring){
-
-            if(nameInfo.popularityPeak.v == -1){
-                return true;
-            }
-
-            if(s.peakYear != nameInfo.popularityPeak.v){
-                return true;
-            }
-        }
-
-        if(s.peakAfter){
-
-            if(nameInfo.popularityPeak.v == -1){
-                return true;
-            }
-
-            if(s.peakYear > nameInfo.popularityPeak.v){
-                return true;
-            }
-        }
-        if(s.peakUnknow){
-            if(nameInfo.popularityPeak.v != -1){
-                return true;
-            }
+        if(s.depAtLast && (popularity < s.popDep)){
+            return false;
         }
     }
 
-    return false;
+    // no criterion invalid, keep the name
+    return true;
 }
 
 
 bool Filters::is_filtered(const FilterSettings &s, FirstNameV firstNameV, Data &data) const{
 
-    if(filter_gender(s, data.pData.infosPerName[firstNameV])){
-        return true;
+    // if at least one criterion is invalid, drop the name
+    if(!filter_gender(s, data.pData.infosPerName[firstNameV])){
+        return false;
     }
 
-    if(filter_letters(s, firstNameV)){
-        return true;
+    if(!filter_letters(s, firstNameV)){
+        return false;
     }
 
-    if(filter_years(s, data.pData.infosPerName[firstNameV])){
-        return true;
+    if(!filter_years(s, data.pData.infosPerName[firstNameV])){
+        return false;
     }
 
-    if(s.filterPopPeriod){
-
-        const auto popularity = data.pData.infosPerName[firstNameV].popularityPerPeriod[static_cast<int>(s.period)];
-
-        if(s.periodAtLeast){
-            if(popularity > s.popPeriod){
-                return true;
-            }
-        }
-        if(s.periodEqual){
-            if(popularity != s.popPeriod){
-                return true;
-            }
-        }
-        if(s.periodAtLast){
-            if(popularity < s.popPeriod){
-                return true;
-            }
-        }
+    if(!filter_popularity_period(s, data.pData.infosPerName[firstNameV])){
+        return false;
     }
 
-    return false;
+    if(!filter_popularity_department(s,firstNameV,  data.pData.infosPerDepartment)){
+        return false;
+    }
+
+    //    if(s.filterPopDep){
+
+    //        bool found = false;
+    //        for(const auto dep : s.insideDepartments){
+    //            if(dep == data.pData.infosPerName[firstNameV].mostCommonDepartment){
+    //                found = true;
+    //                break;
+    //            }
+    //        }
+
+    //        if(!found){
+    //            return false;
+    //        }
+    //    }
+
+
+
+    // no criterion invalid, keep the name
+    return true;
 }
-
-
 
 void Filters::apply(const FilterSettings &s, Data &data){
 
@@ -305,12 +480,12 @@ void Filters::apply(const FilterSettings &s, Data &data){
 
     // filter
     for_each(execution::par_unseq, begin(data.iData.namesInfo), end(data.iData.namesInfo),[&](auto nameInfo){
-        data.filteredNamesMask[nameInfo.first] = is_filtered(s, nameInfo.first, data);
+        data.namesState[nameInfo.first].filtered = is_filtered(s, nameInfo.first, data);
     });
 
     data.countFiltered = 0;
-    for(const auto &m : data.filteredNamesMask){
-        if(!m.second){
+    for(const auto &m : data.namesState){
+        if(m.second.filtered){
             data.filteredNames[data.countFiltered++] = m.first;
         }
     }
@@ -334,110 +509,11 @@ void Filters::apply(const FilterSettings &s, Data &data){
         });
     }
 
-    if(data.currentName.v.length() > 0){
-        if(data.filteredNamesMask[data.currentName]){
-            if(data.filteredNames.size() > 0){
-                data.currentName = data.filteredNames[0];
-            }
+    if((data.currentName.v.length() == 0) || (!data.namesState[data.currentName].filtered)){
+        if(data.countFiltered > 0){
+            data.currentName = data.filteredNames[0];
         }
     }
-
-
-
-    //    if(ui.cbFilters1900_2018->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1900_2020)],
-    //            static_cast<Popularity>(ui.cbPop1900_2020->currentIndex()),
-    //            ui.cbOpe1900_2020->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-    //    if(ui.cbFilters1900_1924->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1900_1924)],
-    //            static_cast<Popularity>(ui.cbPop1900_1924->currentIndex()),
-    //            ui.cbOpe1900_1924->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-    //    if(ui.cbFilters1925_1949->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1925_1949)],
-    //            static_cast<Popularity>(ui.cbPop1925_1949->currentIndex()),
-    //            ui.cbOpe1925_1949->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-    //    if(ui.cbFilters1950_1969->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1950_1969)],
-    //            static_cast<Popularity>(ui.cbPop1950_1969->currentIndex()),
-    //            ui.cbOpe1950_1969->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-
-    //    if(ui.cbFilters1970_1979->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1970_1979)],
-    //            static_cast<Popularity>(ui.cbPop1970_1979->currentIndex()),
-    //            ui.cbOpe1970_1979->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-
-    //    if(ui.cbFilters1980_1989->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1980_1989)],
-    //            static_cast<Popularity>(ui.cbPop1980_1989->currentIndex()),
-    //            ui.cbOpe1980_1989->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-
-    //    if(ui.cbFilters1990_1999->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p1990_1999)],
-    //            static_cast<Popularity>(ui.cbPop1990_1999->currentIndex()),
-    //            ui.cbOpe1990_1999->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-    //    if(ui.cbFilters2000_2009->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p2000_2009)],
-    //            static_cast<Popularity>(ui.cbPop2000_2009->currentIndex()),
-    //            ui.cbOpe2000_2009->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-    //    if(ui.cbFilters2010_2018->isChecked()){
-    //        if(apply_popularity_operator(
-    //            info.popularityPerPeriod[static_cast<size_t>(Period::p2010_2020)],
-    //            static_cast<Popularity>(ui.cbPop2010_2020->currentIndex()),
-    //            ui.cbOpe2010_2020->currentIndex())){
-    //            return true;
-    //        }
-    //    }
-
-    //    if(ui.cbFiltersDepartment->isChecked()){
-    //        for(const auto &dep : insideDepartments){
-    //            auto id  = get_id(dep);
-    ////            if(std::get<2>(info.departmentsInfo[id]).v > 5 ){
-    ////                return true;
-    ////            }
-    //        }
-    //    }
-
-    //    return false;
 
     // fill departments
 //    insideDepartments.clear();

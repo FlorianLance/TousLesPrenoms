@@ -137,8 +137,7 @@ using DepName   = std::string_view;
 using TDep= std::tuple<
     Department,                     DepartmentId,  DepName>;
 static constexpr TupleArray<Dep::SizeEnum, TDep> departments = {{
-    TDep
-    {Dep::Inconnu,                  {0},           "Inconnu"sv},
+    TDep    
     {Dep::Ain,                      {1},           "Ain"sv},
     {Dep::Aisne,                    {2},           "Aisne"sv},
     {Dep::Allier,                   {3},           "Allier"sv},
@@ -238,6 +237,7 @@ static constexpr TupleArray<Dep::SizeEnum, TDep> departments = {{
     {Dep::Martinique,               {972},         "Martinique"sv},
     {Dep::Guyane,                   {973},         "Guyane"sv},
     {Dep::Reunion,                  {974},         "Réunion"sv},
+    {Dep::Inconnu,                  {0},           "Inconnu"sv},
 }};
 
 [[maybe_unused]] constexpr static std::optional<Department> get_department(DepartmentId dep) {

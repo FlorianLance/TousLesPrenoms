@@ -2,6 +2,9 @@
 
 #pragma once
 
+// std
+#include <unordered_set>
+
 // Qt
 #include <QString>
 #include <QColor>
@@ -10,6 +13,7 @@
 #include "gender.hpp"
 #include "period.hpp"
 #include "popularity.hpp"
+#include "department.hpp"
 
 namespace tool {
 
@@ -71,8 +75,12 @@ struct FilterSettings{
     Popularity popPeriod;
 
     // departments
-    bool filterPopDep;
-    QStringList insideDepartmentsTextes;
+    bool filterPopDep;    
+    std::unordered_set<Department> insideDepartments;
+    bool depAtLeast;
+    bool depEqual;
+    bool depAtLast;
+    Popularity popDep;
 
     // sorting
     bool sortAZ;

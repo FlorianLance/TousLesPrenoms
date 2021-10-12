@@ -7,20 +7,30 @@
 
 namespace tool {
 
+struct NameState{
+    bool filtered;
+    bool saved;
+    bool removed;
+};
+
 struct Data{
 
     InputData iData;
     ProcessedData pData;
 
-    size_t countFiltered = 0;
-    std::unordered_map<FirstNameV, bool> filteredNamesMask;
+
+    std::unordered_map<FirstNameV, NameState> namesState;
+
+
     std::vector<FirstNameV> filteredNames;
+    std::vector<FirstNameV> savedNames;
+    std::vector<FirstNameV> removedNames;
+
+    size_t countFiltered = 0;
+    size_t countSaved = 0;
+    size_t countRemoved = 0;
 
     FirstNameV currentName;
-
-//    std::vector<FirstNameV> filteredNames;
-//    std::vector<FirstNameV> savedNames;
-//    std::vector<FirstNameV> removedNames;
 
     bool init(){
 
@@ -32,9 +42,9 @@ struct Data{
         // process data
         pData.generate(iData);
 
-        filteredNamesMask.reserve(iData.names.size());
+        namesState.reserve(iData.names.size());
         for(const auto &nameInfo : iData.namesInfo){
-            filteredNamesMask[nameInfo.first] = true;
+            namesState[nameInfo.first] = {true, false, false};
         }
         filteredNames.resize(iData.names.size());
 
