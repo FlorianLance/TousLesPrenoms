@@ -22,25 +22,23 @@ bool InputData::read_csv_file(const QString &csvFilePath){
             return false;
         }
     Bench::stop();
+    emit set_progress_signal(5);
 
     Bench::start("[init QTextStream]");
         QTextStream csvStream(&csvFile);
         csvStream.readLine();
-    Bench::stop();
-
-
-//    ui.pbLoading->setValue(0);
-//    wait_process(10);
+    Bench::stop();    
+    emit set_progress_signal(15);
 
     Bench::start("[readAll]");
         dataBaseFileContent = csvStream.readAll();
         dataBaseFileContentV = dataBaseFileContent;
     Bench::stop();
+    emit set_progress_signal(30);
 
     // reserve data
     linesPerName.reserve(40000);
     namesInfo.reserve(40000);
-
 
     size_t ii = 0;
     bool read = true;
@@ -84,12 +82,11 @@ bool InputData::read_csv_file(const QString &csvFilePath){
     }
 
     // remove _prenoms_rares from list
-    qDebug() << "size1 " << linesPerName.size();
     linesPerName.erase(FirstNameV{raresNames});
     namesInfo.erase(FirstNameV{raresNames});
-    qDebug() << "size2 " << linesPerName.size();
 
     Bench::stop();
+    emit set_progress_signal(45);
 
     return true;
 }

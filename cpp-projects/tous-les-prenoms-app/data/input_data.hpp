@@ -30,7 +30,18 @@ struct NameLineInfos{
     std::vector<Info> infos;
 };
 
-struct InputData{
+class InputData : public QObject {
+    Q_OBJECT
+public:
+
+    bool read_csv_file(const QString &csvFilePath);
+
+signals:
+
+    void set_progress_signal(int value);
+
+public:
+
     QString dataBaseFileContent;
     QStringView dataBaseFileContentV;
 
@@ -38,8 +49,6 @@ struct InputData{
     um<RawFirstNameV, FirstNameV> namesCorr; // correspondance between raw name and proceessed ones
     um<FirstNameV, QVector<QStringView>> linesPerName; //
     um<FirstNameV, NameLineInfos> namesInfo;
-
-    bool read_csv_file(const QString &csvFilePath);
 
 private:
     const QString raresNames = "_prenoms_rares";

@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Plein de prénoms!</string>
+   <string>TousLesPrénoms</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="4,1,13,0,30">
@@ -1202,7 +1202,7 @@
         <height>0</height>
        </size>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_4" stretch="1,1,0,0,1,30,0,0">
+      <layout class="QVBoxLayout" name="verticalLayout_4" stretch="1,1,0,0,1,30">
        <property name="spacing">
         <number>6</number>
        </property>
@@ -1438,20 +1438,6 @@
            </item>
           </layout>
          </widget>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="laLoading">
-         <property name="text">
-          <string>Chargement de la base de données...</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QProgressBar" name="pbLoading">
-         <property name="value">
-          <number>0</number>
-         </property>
         </widget>
        </item>
       </layout>

@@ -94,6 +94,7 @@ void ProcessedData::generate(InputData &inData){
     });
 
     Bench::stop();
+    emit set_progress_signal(70);
 
     Bench::start("[ProcessedData::generate3]");
 
@@ -261,4 +262,5 @@ void ProcessedData::generate(InputData &inData){
     }
 
     Bench::stop();
+    emit set_progress_signal(95);
 }

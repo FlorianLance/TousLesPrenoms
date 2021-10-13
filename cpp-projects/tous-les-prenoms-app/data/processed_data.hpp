@@ -2,6 +2,9 @@
 
 #pragma once
 
+// Qt
+#include <QObject>
+
 // local
 #include "input_data.hpp"
 #include "period.hpp"
@@ -77,7 +80,9 @@ struct DepartmentProcessedInfos{
 };
 
 
-struct ProcessedData{
+class ProcessedData : public QObject {
+    Q_OBJECT
+public:
 
     um<FirstNameV, NameProcessedInfos> infosPerName;
     um<Gender, GenderProcessedInfos> infosPerGender;
@@ -98,6 +103,9 @@ struct ProcessedData{
     constexpr static std::array<Count, static_cast<int>(Period::SizeEnum)> initCountPerPeriod = {initCount,initCount,initCount,initCount,initCount,initCount,initCount,initCount,initCount};
     constexpr static std::array<Order, static_cast<int>(Period::SizeEnum)> initOrderPerPeriod = {initO,initO,initO,initO,initO,initO,initO,initO,initO};
     constexpr static std::array<Count, static_cast<int>(Gender::SizeEnum)> initCountPerGender = {initCount,initCount,initCount};
+signals:
+
+    void set_progress_signal(int value);
 };
 
 }

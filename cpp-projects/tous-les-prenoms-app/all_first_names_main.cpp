@@ -22,9 +22,10 @@ int main(int argc, char** argv){
     QApplication a(argc, argv);
     QLocale::setDefault(QLocale::c());
     tool::AllFirstNamesMW w;
+    w.init_data();
     w.show();
 
-    w.init_data();
+
 
     return a.exec();
 }

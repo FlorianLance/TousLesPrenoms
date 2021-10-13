@@ -16,6 +16,7 @@
 #include <QRegExpValidator>
 #include <QRegExpValidator>
 #include <QTime>
+#include <QTimer>
 
 
 // local
@@ -536,9 +537,21 @@ void AllFirstNamesMW::init_connections_colors(){
 
 void AllFirstNamesMW::init_data(){
 
+    SplashScreen splash;
+    splash.show();
+    splash.set_progress(1);
+
+    connect(&data.iData, &InputData::set_progress_signal, this, [&](int value){
+        splash.set_progress(value);
+    });
+    connect(&data.pData, &ProcessedData::set_progress_signal, this, [&](int value){
+        splash.set_progress(value);
+    });
+
     Bench::start("[init_data]");
 
     if(!data.init()){
+        // ...
         return;
     }
 
@@ -547,19 +560,29 @@ void AllFirstNamesMW::init_data(){
     Bench::reset();
 
 
+    splash.set_progress(95);
+
+    // read list files
+    //    update_saved_list();
+    //    update_removed_list();
+    //    update_displayed_info();
+
+
     // update lists
     update_ui_from_settings();
 
     update_filters_settings_from_ui(); // temp
 
+    splash.set_progress(100);
 
-    // read list files
-//    update_saved_list();
-//    update_removed_list();
-//    update_displayed_info();
+    // wait a little bit
+    auto t = QTime::currentTime().addMSecs(300);
+    while( QTime::currentTime() < t){
+        QCoreApplication::processEvents( QEventLoop::AllEvents, 5);
+    }
 
-    delete ui.laLoading;
-    delete ui.pbLoading;
+
+
 
 
 
@@ -1623,3 +1646,34 @@ void AllFirstNamesMW::update_displayed_info(){
 
 //    return true;
 //}
+
+void SplashScreen::set_progress(int value){
+    m_progress = value;
+    if (m_progress > 100){
+        m_progress = 100;
+    }
+    if (m_progress < 0){
+        m_progress = 0;
+    }
+    update();
+    QCoreApplication::processEvents( QEventLoop::AllEvents, 5);
+}
+
+void SplashScreen::drawContents(QPainter *painter){
+
+    QSplashScreen::drawContents(painter);
+
+    // style
+    QStyleOptionProgressBar pbstyle;
+    pbstyle.initFrom(this);
+    pbstyle.state = QStyle::State_Enabled;
+    pbstyle.textVisible = false;
+    pbstyle.minimum = 0;
+    pbstyle.maximum = 100;
+    pbstyle.progress = m_progress;
+    pbstyle.invertedAppearance = false;
+    pbstyle.rect = QRect(40, 210, 810, 20); // Where is it.
+
+    // draw
+    style()->drawControl(QStyle::CE_ProgressBar, &pbstyle, painter, this);
+}

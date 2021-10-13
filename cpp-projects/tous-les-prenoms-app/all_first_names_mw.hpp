@@ -16,6 +16,7 @@
 #include <QThread>
 #include <QButtonGroup>
 #include <QListView>
+#include <QSplashScreen>
 //#include <QtCharts>
 
 // local
@@ -39,6 +40,29 @@ namespace tool {
 
 template<typename T1, typename T2>
 using um = std::unordered_map<T1,T2>;
+
+
+class SplashScreen : public QSplashScreen{
+
+    Q_OBJECT
+public:
+
+    explicit SplashScreen() : QSplashScreen(){
+        setPixmap(QPixmap(":/image/splash"));
+        setCursor(Qt::BusyCursor);
+    }
+
+public slots:
+
+    void set_progress(int value);
+
+protected:
+    void drawContents(QPainter *painter);
+
+private:
+    int m_progress = 0;
+};
+
 
 
 class AllFirstNamesMW : public QMainWindow{

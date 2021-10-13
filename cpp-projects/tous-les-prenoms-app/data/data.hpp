@@ -13,11 +13,12 @@ struct NameState{
     bool removed;
 };
 
-struct Data{
+class Data : public QObject {
+    Q_OBJECT
+public:
 
     InputData iData;
     ProcessedData pData;
-
 
     std::unordered_map<FirstNameV, NameState> namesState;
 
@@ -50,7 +51,6 @@ struct Data{
 
         return true;
     }
-
 };
 
 }

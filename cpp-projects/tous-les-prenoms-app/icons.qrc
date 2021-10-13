@@ -2,4 +2,7 @@
     <qresource prefix="/icon">
         <file alias="beer">resources/beer.png</file>
     </qresource>
+    <qresource prefix="/image">
+        <file alias="splash">resources/splash.png</file>
+    </qresource>
 </RCC>
