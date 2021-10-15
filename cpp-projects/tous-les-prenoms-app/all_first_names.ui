@@ -42,7 +42,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tabFilters">
           <attribute name="title">
@@ -932,25 +932,18 @@
                  <property name="spacing">
                   <number>2</number>
                  </property>
-                 <item row="7" column="3">
-                  <widget class="QPushButton" name="pbBalancedFemaleMaleColorName">
+                 <item row="5" column="4">
+                  <widget class="QPushButton" name="pbBalancedFemaleMaleColorBackground">
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
                      <height>0</height>
                     </size>
                    </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="7" column="4">
-                  <widget class="QPushButton" name="pbBalancedFemaleMaleColorBackground">
-                   <property name="minimumSize">
+                   <property name="maximumSize">
                     <size>
-                     <width>0</width>
-                     <height>0</height>
+                     <width>41</width>
+                     <height>41</height>
                     </size>
                    </property>
                    <property name="text">
@@ -959,126 +952,17 @@
                   </widget>
                  </item>
                  <item row="5" column="3">
-                  <widget class="QPushButton" name="pbTotalOtherColorName">
+                  <widget class="QPushButton" name="pbBalancedFemaleMaleColorName">
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
                      <height>0</height>
                     </size>
                    </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="4" alignment="Qt::AlignHCenter">
-                  <widget class="QLabel" name="label_5">
-                   <property name="text">
-                    <string>Fond</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="3">
-                  <widget class="QPushButton" name="pbTotalFemaleColorName">
-                   <property name="minimumSize">
+                   <property name="maximumSize">
                     <size>
-                     <width>0</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="2">
-                  <widget class="QLabel" name="label_27">
-                   <property name="text">
-                    <string>totalement ♂</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="4">
-                  <widget class="QPushButton" name="pbMajorFemaleColorBackground">
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="4">
-                  <widget class="QPushButton" name="pbTotalMaleColorBackground">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="3" alignment="Qt::AlignHCenter">
-                  <widget class="QLabel" name="label_4">
-                   <property name="text">
-                    <string>Prénom</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="2">
-                  <widget class="QLabel" name="label_8">
-                   <property name="text">
-                    <string>majoritairement ♀</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="2">
-                  <widget class="QLabel" name="label_26">
-                   <property name="text">
-                    <string>totalement ♀</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="3">
-                  <widget class="QPushButton" name="pbMajorFemaleColorName">
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="7" column="2">
-                  <widget class="QLabel" name="label_28">
-                   <property name="text">
-                    <string>équilibre ♀ / ♂</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="4">
-                  <widget class="QPushButton" name="pbTotalOtherColorBackground">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="2">
-                  <widget class="QLabel" name="label_29">
-                   <property name="text">
-                    <string>totalement autre</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="3">
-                  <widget class="QPushButton" name="pbTotalMaleColorName">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>0</height>
+                     <width>41</width>
+                     <height>41</height>
                     </size>
                    </property>
                    <property name="text">
@@ -1094,6 +978,130 @@
                      <height>0</height>
                     </size>
                    </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="2">
+                  <widget class="QLabel" name="label_8">
+                   <property name="text">
+                    <string>majoritairement ♀</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="3">
+                  <widget class="QPushButton" name="pbMajorMaleColorName">
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="3" alignment="Qt::AlignHCenter">
+                  <widget class="QLabel" name="label_4">
+                   <property name="text">
+                    <string>Prénom</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="4" alignment="Qt::AlignHCenter">
+                  <widget class="QLabel" name="label_5">
+                   <property name="text">
+                    <string>Fond</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="4">
+                  <widget class="QPushButton" name="pbMajorMaleColorBackground">
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QLabel" name="label_26">
+                   <property name="text">
+                    <string>totalement ♀</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="4">
+                  <widget class="QPushButton" name="pbMajorFemaleColorBackground">
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="3">
+                  <widget class="QPushButton" name="pbMajorFemaleColorName">
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="4">
+                  <widget class="QPushButton" name="pbTotalMaleColorBackground">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="3">
+                  <widget class="QPushButton" name="pbTotalFemaleColorName">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
                    <property name="text">
                     <string/>
                    </property>
@@ -1106,38 +1114,36 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="4" column="3">
-                  <widget class="QPushButton" name="pbMajorMaleColorName">
+                 <item row="3" column="2">
+                  <widget class="QLabel" name="label_27">
+                   <property name="text">
+                    <string>totalement ♂</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="3">
+                  <widget class="QPushButton" name="pbTotalMaleColorName">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>41</width>
+                     <height>41</height>
+                    </size>
+                   </property>
                    <property name="text">
                     <string/>
                    </property>
                   </widget>
                  </item>
-                 <item row="4" column="4">
-                  <widget class="QPushButton" name="pbMajorMaleColorBackground">
+                 <item row="5" column="2">
+                  <widget class="QLabel" name="label_28">
                    <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="6" column="2">
-                  <widget class="QLabel" name="label_13">
-                   <property name="text">
-                    <string>majoritairement autre</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="6" column="3">
-                  <widget class="QPushButton" name="pbMajorOtherColorName">
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="6" column="4">
-                  <widget class="QPushButton" name="pbMajorOtherColorBackground">
-                   <property name="text">
-                    <string/>
+                    <string>équilibre ♀ / ♂</string>
                    </property>
                   </widget>
                  </item>

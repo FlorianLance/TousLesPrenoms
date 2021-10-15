@@ -71,6 +71,7 @@ AllFirstNamesMW::AllFirstNamesMW(QApplication *parent){
     // set connections
     init_connections();
 
+    // start thread
     listWorkerT.start();
 }
 
@@ -78,10 +79,22 @@ void AllFirstNamesMW::init_ui(){
 
     ui.setupUi(this);
 
+    init_ui_lists();
+    init_ui_filters();
+    init_ui_display();
+    init_ui_curves();
+    init_ui_map();
+
+    update_ui_from_settings();
+}
+
+void AllFirstNamesMW::init_ui_lists(){
+
     ui.vlFiltered->addWidget(filteredNamesV = new QListView());
     filteredNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Filtered);
     filteredNamesV->setMouseTracking(true);
     filteredNamesM->nData = &data;
+    filteredNamesM->dSettings = &settings.display;
     filteredNamesV->setModel(filteredNamesM.get());
     filteredNamesV->viewport()->installEventFilter(this);
 
@@ -89,6 +102,7 @@ void AllFirstNamesMW::init_ui(){
     savedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Saved);
     savedNamesV->setMouseTracking(true);
     savedNamesM->nData = &data;
+    savedNamesM->dSettings = &settings.display;
     savedNamesV->setModel(savedNamesM.get());
     savedNamesV->viewport()->installEventFilter(this);
 
@@ -96,15 +110,9 @@ void AllFirstNamesMW::init_ui(){
     removedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Removed);
     removedNamesV->setMouseTracking(true);
     removedNamesM->nData = &data;
+    removedNamesM->dSettings = &settings.display;
     removedNamesV->setModel(removedNamesM.get());
     removedNamesV->viewport()->installEventFilter(this);
-
-    init_ui_filters();   
-    init_ui_settings();
-    init_ui_curves();
-    init_ui_map();
-
-    update_ui_from_settings();
 }
 
 void AllFirstNamesMW::init_ui_filters(){
@@ -220,6 +228,7 @@ void AllFirstNamesMW::init_ui_filters(){
         "-majoritairement: plus de 75%\n"
         "-équilibrée: entre 30% et 60%"
     );
+
 }
 
 void AllFirstNamesMW::init_ui_curves(){
@@ -240,128 +249,105 @@ void AllFirstNamesMW::init_ui_map(){
 }
 
 
-void AllFirstNamesMW::init_ui_settings(){
+void AllFirstNamesMW::init_ui_display(){
 
     // dialogs
+    const auto &backC = settings.display.genderRepartitionsBackgroundColors;
+    const auto &foreC = settings.display.genderRepartitionsForegroundColors;
+    for(auto g : {GR::OnlyFemale, GR::OnlyMale, GR::MostlyFemale, GR::MostlyMale, GR::FemaleMale}){
+        backgroundGendersColorsD[g] = std::make_unique<QColorDialog>(backC.at(g));
+        foregroundGendersColorsD[g] = std::make_unique<QColorDialog>(foreC.at(g));
+    }
 
-    const auto &b = settings.display.genderRepartitionsBackgroundColors;
-    const auto &f = settings.display.genderRepartitionsForegroundColors;
-    using GR = GenderRepartition;
-//    std::vector<std::tuple<GenderRepartition, QColor, QColor, QPushButton*, QPushButton*>> gendersRep = {
-//        {GR::OnlyFemale,      f. ,  d.onlyFemaleBackground,     ui.pbTotalFemaleColorName, ui.pbTotalFemaleColorBackground},
-//        {GR::OnlyMale,        f.onlyMaleName,    d.onlyMaleBackground,       ui.pbTotalMaleColorName, ui.pbTotalMaleColorBackground},
-//        {GR::OnlyOther,       f.onlyOtherName,   d.onlyOtherBackground,      ui.pbTotalOtherColorName, ui.pbTotalOtherColorBackground},
-//        {GR::MostlyFemale,    f.mostlyFemaleName,d.mostlyFemaleBackground,   ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GR::MostlyMale,      f.mostlyMaleName,  d.mostlyMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GR::MostlyOther,     f.mostlyOtherName, d.mostlyOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GR::FemaleMale,      f.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GR::FemaleOther,     f.femaleOtherName, d.femaleOtherBackground,    ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GR::MaleOther,       f.maleOtherName,   d.maleOtherBackground,      ui.pbFemaleColor1, ui.pbFemaleColor1},
-//        {GR::FemaleMaleOther, f.femaleMaleName,  d.femaleMaleBackground,     ui.pbFemaleColor1, ui.pbFemaleColor1},
-//    };
-//    colorsGendersD[GenderRepartition::MostlyFemale] = std::make_unique<QColorDialog>();
-
+    backgroundGendersColorsB = {
+        {GR::OnlyFemale,    ui.pbTotalFemaleColorBackground},
+        {GR::OnlyMale,      ui.pbTotalMaleColorBackground},
+        {GR::MostlyMale,    ui.pbMajorFemaleColorBackground},
+        {GR::MostlyFemale,  ui.pbMajorMaleColorBackground},
+        {GR::FemaleMale,    ui.pbBalancedFemaleMaleColorBackground}
+    };
+    foregroundGendersColorsB = {
+        {GR::OnlyFemale,    ui.pbTotalFemaleColorName},
+        {GR::OnlyMale,      ui.pbTotalMaleColorName},
+        {GR::MostlyMale,    ui.pbMajorFemaleColorName},
+        {GR::MostlyFemale,  ui.pbMajorMaleColorName},
+        {GR::FemaleMale,    ui.pbBalancedFemaleMaleColorName}
+    };
 }
-
 
 void AllFirstNamesMW::init_connections(){
 
-    // this
-    connect(this, &AllFirstNamesMW::apply_filter_signal, listWorker.get(), &ListWorker::apply_filter);
+    init_connections_lists();
+    init_connections_filters();
+    init_connections_display();
+
+
+//    connect(ui.twListNames, &QTabWidget::currentChanged, this, [&](int index){
+
+//        if(index == 0){
+
+//            //            if(ui.lwFilteredNames->currentRow() != -1){
+//            //                currentInfo = &namesInfos[namesId[ui.lwFilteredNames->currentItem()->text()]];
+//            //            }else{
+//            //                if(ui.lwFilteredNames->count() > 0){
+//            //                    ui.lwFilteredNames->setCurrentRow(0);
+//            //                    currentInfo = &namesInfos[namesId[ui.lwFilteredNames->currentItem()->text()]];
+//            //                }
+//            //            }
+
+//        }else if(index == 1){
+
+//            //            if(ui.lwSavedNames->currentRow() != -1){
+//            //                currentInfo = &namesInfos[namesId[ui.lwSavedNames->currentItem()->text()]];
+//            //            }else{
+//            //                if(ui.lwSavedNames->count() > 0){
+//            //                    ui.lwSavedNames->setCurrentRow(0);
+//            //                    currentInfo = &namesInfos[namesId[ui.lwSavedNames->currentItem()->text()]];
+//            //                }
+//            //            }
+
+//        }else{
+
+//            //            if(ui.lwRemoved->currentRow() != -1){
+//            //                currentInfo = &namesInfos[namesId[ui.lwRemoved->currentItem()->text()]];
+//            //            }else{
+//            //                if(ui.lwRemoved->count() > 0){
+//            //                    ui.lwRemoved->setCurrentRow(0);
+//            //                    currentInfo = &namesInfos[namesId[ui.lwRemoved->currentItem()->text()]];
+//            //                }
+//            //            }
+//        }
+
+//        update_displayed_info();
+//    });
+
+
+//    connect(ui.pbKeepCurrentName, &QPushButton::clicked, this, &MainWindow::keep_current_name);
+//    connect(ui.pbRemoveCurrentName, &QPushButton::clicked, this, &MainWindow::remove_current_name);
+//    connect(ui.pbPrevious, &QPushButton::clicked, this, &MainWindow::previous_name);
+//    connect(ui.pbNext, &QPushButton::clicked, this, &MainWindow::next_name);
+
+//    connect(ui.pbRetireSelectionFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_selection_from_saved);
+//    connect(ui.pbRetireAllFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_all_from_saved);
+
+
+}
+
+void AllFirstNamesMW::init_connections_lists(){
+
     // worker
     connect(listWorker.get(), &ListWorker::list_filtered_signal, this, &AllFirstNamesMW::update_filtered_list);
 
-    // ui
-    // # spin boxes
-    connect(ui.sbMinNbLetters,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](int value){
-        if(value > ui.sbMaxNbLetters->value()){
-            ui.sbMinNbLetters->setValue(ui.sbMaxNbLetters->value());
-        }
-        update_filters_settings_from_ui();
-    });
-    connect(ui.sbMaxNbLetters,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](int value){
-        if(value < ui.sbMinNbLetters->value()){
-            ui.sbMaxNbLetters->setValue(ui.sbMinNbLetters->value());
-        }
-        update_filters_settings_from_ui();
-    });
-    connect(ui.sbAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_settings_from_ui();});
-    connect(ui.sbLastAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_settings_from_ui();});
-    connect(ui.sbPeakYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_settings_from_ui();});
-    // # line edit
-    connect(ui.leStartsBy, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
-    connect(ui.leEndsBy, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
-    connect(ui.leContains, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
-    connect(ui.leDoNotContain, &QLineEdit::textChanged, this, [&](){update_filters_settings_from_ui();});
+    // sorting
+    connect(ui.rbSortAZ,   &QRadioButton::toggled, this, [&](){update_filters_from_ui();});
+    connect(ui.rbSortZA,   &QRadioButton::toggled, this, [&](){update_filters_from_ui();});
+    connect(ui.rbSortPopI, &QRadioButton::toggled, this, [&](){update_filters_from_ui();});
+    connect(ui.rbSortPopS, &QRadioButton::toggled, this, [&](){update_filters_from_ui();});
+
+    // last name
     connect(ui.leLastName, &QLineEdit::textChanged, this, [&](){update_displayed_info();});
-    connect(ui.leDep, &QLineEdit::textChanged, this, [&](){
-        ui.leDep->blockSignals(true);
-        ui.leDep->setText(ui.leDep->text().replace(";;",";"));
-        ui.leDep->blockSignals(false);
-        update_filters_settings_from_ui();
-    });
-    // # check boxes
-    connect(ui.cbFiltersLetters, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbNbLetters, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbContains, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbDoNotContain, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbStartsBy, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbEndsBy, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbFiltersGender, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOnlyFemale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOnlyMale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOnlyOther, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbMajorFemale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbMajorMale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbMajorOther, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbFemaleMale, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    // connect(ui.cbFemaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    // connect(ui.cbMaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
-    connect(ui.cbFiltersPopDep, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbFiltersYears, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbLastAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbPeakYear, &QCheckBox::stateChanged,  this, [&](){update_filters_settings_from_ui();});
-    // # comboboxes
-    connect(ui.cbOpeAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOpeLastAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOpePeakYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOpePer, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbPopPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbOpeDep, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    connect(ui.cbPopDep, &QComboBox::currentTextChanged,  this, [&](){update_filters_settings_from_ui();});
-    // # radiobutton
-    connect(ui.rbSortAZ,   &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
-    connect(ui.rbSortZA,   &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
-    connect(ui.rbSortPopI, &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
-    connect(ui.rbSortPopS, &QRadioButton::toggled, this, [&](){update_filters_settings_from_ui();});
-    // # pushbuttons
-    connect(ui.pbAddDep, &QPushButton::clicked, this, [&]{
 
-        auto newDep = QString::number(std::get<1>(departments.data[ui.cbDep->currentIndex()]).v);
-        auto currentTxt = ui.leDep->text();
-        if(currentTxt.length() == 0){
-            ui.leDep->setText(newDep);
-        }else{
-            for(auto depStr : currentTxt.split(";")){
-                if(depStr == newDep){
-                    return;
-                }
-            }
-
-            if(currentTxt[currentTxt.size()-1] == ';'){
-                ui.leDep->setText(currentTxt % newDep);
-            }else{
-                ui.leDep->setText(currentTxt % QSL(";") % newDep);
-            }
-        }
-        update_filters_settings_from_ui();
-    });
-
-    // # list view names
+    // list view names
     connect(filteredNamesV, &QListView::entered, this, [&](const QModelIndex &index){
         if(!listFilteredMousePressed){
             return;
@@ -424,114 +410,118 @@ void AllFirstNamesMW::init_connections(){
         data.currentName = n;
         update_displayed_info();
     });
-
-
-
-
-
-//    connect(ui.twListNames, &QTabWidget::currentChanged, this, [&](int index){
-
-//        if(index == 0){
-
-//            //            if(ui.lwFilteredNames->currentRow() != -1){
-//            //                currentInfo = &namesInfos[namesId[ui.lwFilteredNames->currentItem()->text()]];
-//            //            }else{
-//            //                if(ui.lwFilteredNames->count() > 0){
-//            //                    ui.lwFilteredNames->setCurrentRow(0);
-//            //                    currentInfo = &namesInfos[namesId[ui.lwFilteredNames->currentItem()->text()]];
-//            //                }
-//            //            }
-
-//        }else if(index == 1){
-
-//            //            if(ui.lwSavedNames->currentRow() != -1){
-//            //                currentInfo = &namesInfos[namesId[ui.lwSavedNames->currentItem()->text()]];
-//            //            }else{
-//            //                if(ui.lwSavedNames->count() > 0){
-//            //                    ui.lwSavedNames->setCurrentRow(0);
-//            //                    currentInfo = &namesInfos[namesId[ui.lwSavedNames->currentItem()->text()]];
-//            //                }
-//            //            }
-
-//        }else{
-
-//            //            if(ui.lwRemoved->currentRow() != -1){
-//            //                currentInfo = &namesInfos[namesId[ui.lwRemoved->currentItem()->text()]];
-//            //            }else{
-//            //                if(ui.lwRemoved->count() > 0){
-//            //                    ui.lwRemoved->setCurrentRow(0);
-//            //                    currentInfo = &namesInfos[namesId[ui.lwRemoved->currentItem()->text()]];
-//            //                }
-//            //            }
-//        }
-
-//        update_displayed_info();
-//    });
-
-
-//    connect(ui.pbKeepCurrentName, &QPushButton::clicked, this, &MainWindow::keep_current_name);
-//    connect(ui.pbRemoveCurrentName, &QPushButton::clicked, this, &MainWindow::remove_current_name);
-//    connect(ui.pbPrevious, &QPushButton::clicked, this, &MainWindow::previous_name);
-//    connect(ui.pbNext, &QPushButton::clicked, this, &MainWindow::next_name);
-
-//    connect(ui.pbRetireSelectionFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_selection_from_saved);
-//    connect(ui.pbRetireAllFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_all_from_saved);
-
-
-    init_connections_colors();
 }
 
-void AllFirstNamesMW::init_connections_colors(){
+void AllFirstNamesMW::init_connections_filters(){
 
-//    // buttons
-//    connect(ui.pbFemaleColor1, &QPushButton::clicked, &femaleCol1D, &QColorDialog::show);
-//    connect(ui.pbFemaleColor2, &QPushButton::clicked, &femaleCol2D, &QColorDialog::show);
-//    connect(ui.pbMaleColor1,   &QPushButton::clicked, &maleCol1D,   &QColorDialog::show);
-//    connect(ui.pbMaleColor2,   &QPushButton::clicked, &maleCol2D,   &QColorDialog::show);
-//    connect(ui.pbBothColor1,   &QPushButton::clicked, &bothCol1D,   &QColorDialog::show);
-//    connect(ui.pbBothColor2,   &QPushButton::clicked, &bothCol2D,   &QColorDialog::show);
-//    connect(ui.pbOtherColor1,  &QPushButton::clicked, &otherCol1D,  &QColorDialog::show);
-//    connect(ui.pbOtherColor2,  &QPushButton::clicked, &otherCol2D,  &QColorDialog::show);
+    // this
+    connect(this, &AllFirstNamesMW::apply_filter_signal, listWorker.get(), &ListWorker::apply_filter);
 
-//    // dialogs
-//    connect(&femaleCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbFemaleColor1, settings.display.femaleCol1=c);
-////        update_displayed_info();
-//    });
-//    connect(&femaleCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbFemaleColor2, settings.display.femaleCol2=c);
-////        update_displayed_info();
-//    });
+    // ui
+    // # letters
+    connect(ui.cbFiltersLetters, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbNbLetters, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbContains, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbDoNotContain, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbStartsBy, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbEndsBy, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.sbMinNbLetters,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](int value){
+        if(value > ui.sbMaxNbLetters->value()){
+            ui.sbMinNbLetters->setValue(ui.sbMaxNbLetters->value());
+        }
+        update_filters_from_ui();
+    });
+    connect(ui.sbMaxNbLetters,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](int value){
+        if(value < ui.sbMinNbLetters->value()){
+            ui.sbMaxNbLetters->setValue(ui.sbMinNbLetters->value());
+        }
+        update_filters_from_ui();
+    });
+    connect(ui.leStartsBy, &QLineEdit::textChanged, this, [&](){update_filters_from_ui();});
+    connect(ui.leEndsBy, &QLineEdit::textChanged, this, [&](){update_filters_from_ui();});
+    connect(ui.leContains, &QLineEdit::textChanged, this, [&](){update_filters_from_ui();});
+    connect(ui.leDoNotContain, &QLineEdit::textChanged, this, [&](){update_filters_from_ui();});
 
-//    connect(&maleCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbMaleColor1, settings.display.maleCol1 = c);
-////        update_displayed_info();
-//    });
+    // # years
+    connect(ui.sbAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_from_ui();});
+    connect(ui.sbLastAppearsYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_from_ui();});
+    connect(ui.sbPeakYear,  QOverload<int>::of(&QSpinBox::valueChanged), this, [&](){update_filters_from_ui();});
+    connect(ui.cbFiltersYears, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbLastAppearsYear, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbPeakYear, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOpeAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOpeLastAppearsYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOpePeakYear, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
 
-//    connect(&maleCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbMaleColor2, settings.display.maleCol2 = c);
-////        update_displayed_info();
-//    });
+    // # dep
+    connect(ui.leDep, &QLineEdit::textChanged, this, [&](){
+        ui.leDep->blockSignals(true);
+        ui.leDep->setText(ui.leDep->text().replace(";;",";"));
+        ui.leDep->blockSignals(false);
+        update_filters_from_ui();
+    });
+    connect(ui.cbOpeDep, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbPopDep, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.pbAddDep, &QPushButton::clicked, this, [&]{
 
-//    connect(&bothCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbBothColor1, settings.display.bothCol1 = c);
-////        update_displayed_info();
-//    });
+        auto newDep = QString::number(std::get<1>(departments.data[ui.cbDep->currentIndex()]).v);
+        auto currentTxt = ui.leDep->text();
+        if(currentTxt.length() == 0){
+            ui.leDep->setText(newDep);
+        }else{
+            for(auto depStr : currentTxt.split(";")){
+                if(depStr == newDep){
+                    return;
+                }
+            }
 
-//    connect(&bothCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbBothColor2, settings.display.bothCol2 = c);
-////        update_displayed_info();
-//    });
+            if(currentTxt[currentTxt.size()-1] == ';'){
+                ui.leDep->setText(currentTxt % newDep);
+            }else{
+                ui.leDep->setText(currentTxt % QSL(";") % newDep);
+            }
+        }
+        update_filters_from_ui();
+    });
 
-//    connect(&otherCol1D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbOtherColor1, settings.display.otherCol1 = c);
-////        update_displayed_info();
-//    });
+    // # gender
+    connect(ui.cbFiltersGender, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOnlyFemale, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOnlyMale, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOnlyOther, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbMajorFemale, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbMajorMale, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbMajorOther, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbFemaleMale, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    // connect(ui.cbFemaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
+    // connect(ui.cbMaleOther, &QCheckBox::stateChanged,  this, [&](){update_filter_settings_from_ui();});
 
-//    connect(&otherCol2D, &QColorDialog::currentColorChanged, this, [&](const QColor &c){
-//        UiUtility::fill_button_icon(ui.pbOtherColor2, settings.display.otherCol2 = c);
-////        update_displayed_info();
-//    });
+    // # period
+    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbFiltersPopDep, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbFiltersPopPeriod, &QCheckBox::stateChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbOpePer, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+    connect(ui.cbPopPeriod, &QComboBox::currentTextChanged,  this, [&](){update_filters_from_ui();});
+}
+
+void AllFirstNamesMW::init_connections_display(){
+
+    auto &foreC = settings.display.genderRepartitionsForegroundColors;
+    auto &backC = settings.display.genderRepartitionsBackgroundColors;
+    for(auto g : {GR::OnlyFemale, GR::OnlyMale, GR::MostlyFemale, GR::MostlyMale, GR::FemaleMale}){
+        connect(foregroundGendersColorsB[g], &QPushButton::clicked, foregroundGendersColorsD[g].get(), &QColorDialog::show);
+        connect(backgroundGendersColorsB[g], &QPushButton::clicked, backgroundGendersColorsD[g].get(), &QColorDialog::show);
+        connect(foregroundGendersColorsD[g].get(), &QColorDialog::colorSelected, this, [&,g](const QColor &c){
+            foreC[g] = c;
+            update_display_from_ui();
+        });
+        connect(backgroundGendersColorsD[g].get(), &QColorDialog::colorSelected, this, [&,g](const QColor &c){
+            backC[g] = c;
+            update_filters_from_ui();
+        });
+    }
 }
 
 
@@ -567,11 +557,14 @@ void AllFirstNamesMW::init_data(){
     //    update_removed_list();
     //    update_displayed_info();
 
+    // load parameters
+    // ...
 
     // update lists
     update_ui_from_settings();
 
-    update_filters_settings_from_ui(); // temp
+    update_filters_from_ui(); // temp
+    update_display_from_ui();
 
     splash.set_progress(100);
 
@@ -854,8 +847,9 @@ void AllFirstNamesMW::update_filtered_list(){
 }
 
 
-void AllFirstNamesMW::update_filters_settings_from_ui(){
+void AllFirstNamesMW::update_filters_from_ui(){
 
+    // uppdate ui sub groups
     ui.wSubGender->setEnabled(ui.cbFiltersGender->isChecked());
     ui.wSubLetters->setEnabled(ui.cbFiltersLetters->isChecked());
     ui.wSubDep->setEnabled(ui.cbFiltersPopDep->isChecked());
@@ -863,8 +857,8 @@ void AllFirstNamesMW::update_filters_settings_from_ui(){
     ui.sbAppearsYear->setEnabled(ui.cbOpeAppearsYear->currentIndex() != 3);
     ui.sbPeakYear->setEnabled(ui.cbOpePeakYear->currentIndex() != 3);
 
-
-    // gender
+    // filters
+    // # gender
     settings.filters.filterGender            = ui.cbFiltersGender->isChecked();
     settings.filters.onlyFemale              = ui.cbOnlyFemale->isChecked();
     settings.filters.onlyMale                = ui.cbOnlyMale->isChecked();
@@ -875,7 +869,7 @@ void AllFirstNamesMW::update_filters_settings_from_ui(){
     settings.filters.femaleMale              = ui.cbFemaleMale->isChecked();
     settings.filters.femaleOther             = false;//ui.cbFemaleOther->isChecked();
     settings.filters.maleOther               = false;//ui.cbMaleOther->isChecked();
-    // letters
+    // # letters
     settings.filters.filterLetters           = ui.cbFiltersLetters->isChecked();
     settings.filters.startsBy                = ui.cbStartsBy->isChecked();
     settings.filters.startsByTextes          = ui.leStartsBy->text().split(Filters::sepWords);
@@ -888,34 +882,34 @@ void AllFirstNamesMW::update_filters_settings_from_ui(){
     settings.filters.nbLetters               = ui.cbNbLetters->isChecked();;
     settings.filters.minLettersNb            = ui.sbMinNbLetters->value();
     settings.filters.maxLettersNb            = ui.sbMaxNbLetters->value();
-    // year
-    // # appears
+    // # year
+    // ## appears
     settings.filters.filterYear              = ui.cbFiltersYears->isChecked();
     settings.filters.appearsBefore           = ui.cbOpeAppearsYear->currentIndex() == 0 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsDuring           = ui.cbOpeAppearsYear->currentIndex() == 1 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsAfter            = ui.cbOpeAppearsYear->currentIndex() == 2 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsUnknow           = ui.cbOpeAppearsYear->currentIndex() == 3 && ui.cbAppearsYear->isChecked();
     settings.filters.appearsYear             = ui.sbAppearsYear->value();
-    // # last appears
+    // ## last appears
     settings.filters.lastAppearsBefore       = ui.cbOpeLastAppearsYear->currentIndex() == 0 && ui.cbLastAppearsYear->isChecked();
     settings.filters.lastAppearsDuring       = ui.cbOpeLastAppearsYear->currentIndex() == 1 && ui.cbLastAppearsYear->isChecked();
     settings.filters.lastAppearsAfter        = ui.cbOpeLastAppearsYear->currentIndex() == 2 && ui.cbLastAppearsYear->isChecked();
     settings.filters.lastAppearsUnknow       = ui.cbOpeLastAppearsYear->currentIndex() == 3 && ui.cbLastAppearsYear->isChecked();
     settings.filters.lastAppearsYear         = ui.sbAppearsYear->value();
-    // # peak
+    // ## peak
     settings.filters.peakBefore              = ui.cbOpePeakYear->currentIndex() == 0 && ui.cbPeakYear->isChecked();
     settings.filters.peakDuring              = ui.cbOpePeakYear->currentIndex() == 1 && ui.cbPeakYear->isChecked();
     settings.filters.peakAfter               = ui.cbOpePeakYear->currentIndex() == 2 && ui.cbPeakYear->isChecked();
     settings.filters.peakUnknow              = ui.cbOpePeakYear->currentIndex() == 3 && ui.cbPeakYear->isChecked();
     settings.filters.peakYear                = ui.sbPeakYear->value();
-    // period
+    // # period
     settings.filters.filterPopPeriod         = ui.cbFiltersPopPeriod->isChecked();
     settings.filters.period                  = static_cast<Period>(ui.cbPeriod->currentIndex());
     settings.filters.periodAtLeast           = ui.cbOpePer->currentIndex() == 0;
     settings.filters.periodEqual             = ui.cbOpePer->currentIndex() == 1;
     settings.filters.periodAtLast            = ui.cbOpePer->currentIndex() == 2;
     settings.filters.popPeriod               = static_cast<Popularity>(ui.cbPopPeriod->currentIndex());
-    // department
+    // # department
     settings.filters.filterPopDep            = ui.cbFiltersPopDep->isChecked();
     settings.filters.depAtLeast              = ui.cbOpeDep->currentIndex() == 0;
     settings.filters.depEqual                = ui.cbOpeDep->currentIndex() == 1;
@@ -931,12 +925,14 @@ void AllFirstNamesMW::update_filters_settings_from_ui(){
         }
     }
 
-    // ...
-    // sortings
+    // # sorting
     settings.filters.sortAZ                  = ui.rbSortAZ->isChecked();
     settings.filters.sortZA                  = ui.rbSortZA->isChecked();
     settings.filters.sortPopS                = ui.rbSortPopS->isChecked();
     settings.filters.sortPopI                = ui.rbSortPopI->isChecked();
+
+
+
 
     emit apply_filter_signal(&data, settings.filters);
 
@@ -988,7 +984,21 @@ void AllFirstNamesMW::update_filters_settings_from_ui(){
 //        currentInfo = &namesInfos[namesId[filteredNamesStr[0]]];
 //    }else{
 //        currentInfo = nullptr;
-//    }
+    //    }
+}
+
+void AllFirstNamesMW::update_display_from_ui(){
+
+    auto &foreC = settings.display.genderRepartitionsForegroundColors;
+    auto &backC = settings.display.genderRepartitionsBackgroundColors;
+
+    for(auto g : {GR::OnlyFemale, GR::OnlyMale, GR::MostlyFemale, GR::MostlyMale, GR::FemaleMale}){
+        UiUtility::fill_button_icon(foregroundGendersColorsB[g], foreC[g]);
+        UiUtility::fill_button_icon(backgroundGendersColorsB[g], backC[g]);
+    }
+
+    update_filtered_list();
+    update_displayed_info();
 }
 
 //void MainWindow::update_saved_list(){

@@ -13,13 +13,13 @@ class UiUtility{
 public:
 
     static void init(){
-        p = std::make_unique<QPixmap>(20,40);
+        p = std::make_unique<QPixmap>(40,20);
     }
 
     static void fill_button_icon(QPushButton *button, QColor color){
         p->fill(color);
         button->setIcon(QIcon(*p));
-        button->setIconSize(QSize(20,40));
+        button->setIconSize(QSize(40,20));
     }
 
 private:

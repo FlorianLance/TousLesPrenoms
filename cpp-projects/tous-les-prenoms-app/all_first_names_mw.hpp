@@ -80,25 +80,26 @@ public:
     // ui
     // # init
     void init_ui();
-    void init_ui_filters();    
+    void init_ui_lists();
     void init_ui_curves();
     void init_ui_map();
-    void init_ui_settings();
+    void init_ui_filters();
+    void init_ui_display();
     // # update
-    void update_ui_curves(){}
-    void update_ui_map(){}
     void update_ui_from_settings();
     // connections
     void init_connections();
-    void init_connections_colors();
+    void init_connections_lists();
+    void init_connections_filters();
+    void init_connections_display();
 
     // data
     void init_data();
 
+    // settings
+    void update_filters_from_ui();
+    void update_display_from_ui();
 
-
-    // filters
-    void update_filters_settings_from_ui();
 
     // I/O
     //    bool save_settings_file(const QString &path) const;
@@ -161,7 +162,11 @@ public:
     CurveW *curveW = nullptr;
 
     // # forms
-    std::unordered_map<GenderRepartition, std::unique_ptr<QColorDialog>> colorsGendersD;
+    using GR = GenderRepartition;
+    um<GR, QPushButton*> foregroundGendersColorsB;
+    um<GR, QPushButton*> backgroundGendersColorsB;
+    um<GR, std::unique_ptr<QColorDialog>> foregroundGendersColorsD;
+    um<GR, std::unique_ptr<QColorDialog>> backgroundGendersColorsD;
 //    QColorDialog femaleCol1D;
 //    QColorDialog femaleCol2D;
 //    QColorDialog maleCol1D;

@@ -93,29 +93,30 @@ struct DisplaySettings{
     std::unordered_map<GenderRepartition, QColor> genderRepartitionsForegroundColors ={
         {GenderRepartition::OnlyFemale,      {141,226,148}},
         {GenderRepartition::OnlyMale,        {185,177,207}},
-        {GenderRepartition::OnlyOther,       {223,171,140}},
         {GenderRepartition::MostlyMale,      {185,177,207}},
         {GenderRepartition::MostlyFemale,    {141,226,148}},
-        {GenderRepartition::MostlyOther,     {223,171,140}},
         {GenderRepartition::FemaleMale,      {115,187,215}},
-        {GenderRepartition::FemaleOther,     {115,187,215}},
-        {GenderRepartition::MaleOther,       {115,187,215}},
-        {GenderRepartition::FemaleMaleOther, {115,187,215}},
         {GenderRepartition::Unknow,          {255,255,255}}
+//        {GenderRepartition::OnlyOther,       {223,171,140}},
+//        {GenderRepartition::MostlyOther,     {223,171,140}},
+//        {GenderRepartition::FemaleOther,     {115,187,215}},
+//        {GenderRepartition::MaleOther,       {115,187,215}},
+//        {GenderRepartition::FemaleMaleOther, {115,187,215}},        
     };
 
     std::unordered_map<GenderRepartition, QColor> genderRepartitionsBackgroundColors ={
         {GenderRepartition::OnlyFemale,      {22,90,28}},
         {GenderRepartition::OnlyMale,        {69,60,98}},
-        {GenderRepartition::OnlyOther,       {125,68,34}},
         {GenderRepartition::MostlyMale,      {69,60,98}},
         {GenderRepartition::MostlyFemale,    {22,90,28}},
-        {GenderRepartition::MostlyOther,     {125,68,34}},
         {GenderRepartition::FemaleMale,      {31,85,105}},
-        {GenderRepartition::FemaleOther,     {31,85,105}},
-        {GenderRepartition::MaleOther,       {31,85,105}},
-        {GenderRepartition::FemaleMaleOther, {31,85,105}},
         {GenderRepartition::Unknow,          {0,0,0}}
+//        {GenderRepartition::MostlyOther,     {125,68,34}},
+//        {GenderRepartition::OnlyOther,       {125,68,34}},
+//        {GenderRepartition::FemaleOther,     {31,85,105}},
+//        {GenderRepartition::MaleOther,       {31,85,105}},
+//        {GenderRepartition::FemaleMaleOther, {31,85,105}},
+
     };
 };
 

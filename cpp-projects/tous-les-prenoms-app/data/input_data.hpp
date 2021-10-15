@@ -3,7 +3,10 @@
 #pragma once
 
 // std
-#include "unordered_map"
+#include <unordered_map>
+
+// Qt
+#include <QObject>
 
 // local
 #include "utility/types.hpp"

@@ -22,9 +22,9 @@ bool Filters::filter_gender(const FilterSettings &s, const NameProcessedInfos &n
     if(s.onlyMale && nameInfo.genderRepartition == GenderRepartition::OnlyMale){
         return true;
     }
-    if(s.onlyOther && nameInfo.genderRepartition == GenderRepartition::OnlyOther){
-        return true;
-    }
+//    if(s.onlyOther && nameInfo.genderRepartition == GenderRepartition::OnlyOther){
+//        return true;
+//    }
     // # major
     if(s.majorFemale && nameInfo.genderRepartition == GenderRepartition::MostlyFemale){
         return true;
@@ -32,19 +32,19 @@ bool Filters::filter_gender(const FilterSettings &s, const NameProcessedInfos &n
     if(s.majorMale && nameInfo.genderRepartition == GenderRepartition::MostlyMale){
         return true;
     }
-    if(s.majorOther && nameInfo.genderRepartition == GenderRepartition::MostlyOther){
-        return true;
-    }
+//    if(s.majorOther && nameInfo.genderRepartition == GenderRepartition::MostlyOther){
+//        return true;
+//    }
     // # balanced
     if(s.femaleMale && nameInfo.genderRepartition == GenderRepartition::FemaleMale){
         return true;
     }
-    if(s.femaleOther && nameInfo.genderRepartition == GenderRepartition::FemaleOther){
-        return true;
-    }
-    if(s.maleOther && nameInfo.genderRepartition == GenderRepartition::MaleOther){
-        return true;
-    }
+//    if(s.femaleOther && nameInfo.genderRepartition == GenderRepartition::FemaleOther){
+//        return true;
+//    }
+//    if(s.maleOther && nameInfo.genderRepartition == GenderRepartition::MaleOther){
+//        return true;
+//    }
 
     // no criterion valid, drop the name
     return false;

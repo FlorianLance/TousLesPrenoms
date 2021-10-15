@@ -7,6 +7,7 @@
 
 // local
 #include "data/data.hpp"
+#include "data/settings.hpp"
 
 namespace tool::ui {
 
@@ -29,6 +30,7 @@ public:
 //    std::unordered_map<std::string_view, std::tuple<QString, std::int64_t, bool>> elements;
 //    std::vector<std::string_view> order;
     tool::Data *nData = nullptr;
+    DisplaySettings *dSettings = nullptr;
 
 private:
     Mode m_mode;

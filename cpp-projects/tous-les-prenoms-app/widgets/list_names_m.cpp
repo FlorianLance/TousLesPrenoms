@@ -36,13 +36,23 @@ QVariant ListNamesM::data(const QModelIndex &index, int role) const{
             return nData->removedNames[index.row()].v.toString();
         }
     }else if (role == Qt::BackgroundRole){
-        return QColor(Qt::white);
+
+        if(m_mode == Mode::Filtered){
+            auto gr = nData->pData.infosPerName[nData->filteredNames[index.row()]].genderRepartition;
+            return dSettings->genderRepartitionsBackgroundColors[gr];
+        }
+
     }else if (role == Qt::ForegroundRole){
 
         if(m_mode == Mode::Filtered){
-
-
+            auto gr = nData->pData.infosPerName[nData->filteredNames[index.row()]].genderRepartition;
+            return dSettings->genderRepartitionsForegroundColors[gr];
         }
+//        nData->pData.infosPerName[index.row()].genderRepartition;
+
+//        if(m_mode == Mode::Filtered){
+//            return dSettings->genderRepartitionsForegroundColors[gr];
+//        }
 //        ndData->filteredNames;
 //        if(index.column() == 0){
 //            return QColor(Qt::black);
