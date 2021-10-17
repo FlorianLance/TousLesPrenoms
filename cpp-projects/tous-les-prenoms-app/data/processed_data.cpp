@@ -22,7 +22,7 @@ void ProcessedData::generate(InputData &inData){
 
     // init infos per department
     for(const auto &dep : departments.data){
-        infosPerDepartment[std::get<0>(dep)] = {std::get<0>(dep), initCount, initCount, {}};
+        infosPerDepartment[std::get<0>(dep)] = {std::get<0>(dep), initCount, initCount, 0., {}};
     }
 
     // init infos per year
@@ -243,7 +243,13 @@ void ProcessedData::generate(InputData &inData){
         }
     }
 
+    size_t max = 0;
     for(auto &depInfo : infosPerDepartment){
+
+        if(depInfo.second.total.v > max){
+            max = depInfo.second.total.v;
+        }
+
         std::vector<NameCount> total;
         total.reserve(depInfo.second.infosPerName.size());
         for(auto &nameCount : depInfo.second.infosPerName){
@@ -259,6 +265,10 @@ void ProcessedData::generate(InputData &inData){
             depInfo.second.infosPerName[nameCount.name].order = order;
             depInfo.second.infosPerName[nameCount.name].popularity = get_popularity(order, nameCount.count);
         }
+    }
+
+    for(auto &depInfo : infosPerDepartment){
+        depInfo.second.factorToMax = 1.0*depInfo.second.total.v / max;
     }
 
     Bench::stop();

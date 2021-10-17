@@ -76,6 +76,7 @@ struct DepartmentProcessedInfos{
     Department department{Dep::Inconnu};
     Count total{0};
     Count nbMostCommonNames{0};
+    double factorToMax{0};
     um<FirstNameV, DepNameInfos> infosPerName;
 };
 

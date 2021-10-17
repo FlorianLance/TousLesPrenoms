@@ -1,5 +1,5 @@
-Texte -2 0A0A0A
-Inconnu -1 000000
+Texte -1 0A0A0A
+Inconnu 0 000000
 Ain 1 FF8C60
 Aisne 2 FF00E5
 Allier 3 FF1900

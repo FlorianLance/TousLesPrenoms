@@ -113,7 +113,12 @@ public slots:
 
 
     void update_filtered_list();
-    void update_displayed_info();
+
+    void update_displayed_current_name_infos();
+    void update_displayed_name(FirstNameV name);
+    void update_displayed_map(FirstNameV name);
+    void update_displayed_curve(FirstNameV name);
+    void update_displayed_others_infos(FirstNameV name);
 
 
     // actions

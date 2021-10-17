@@ -735,7 +735,7 @@
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>50</height>
+               <height>0</height>
               </size>
              </property>
              <layout class="QGridLayout" name="gridLayout_16" columnstretch="1,1,1,50">
@@ -1574,14 +1574,14 @@
              <item>
               <widget class="QPushButton" name="pbKeepCurrentName">
                <property name="text">
-                <string>Peut-être...</string>
+                <string>Retenir</string>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QPushButton" name="pbRemoveCurrentName">
                <property name="text">
-                <string>Heu non...</string>
+                <string>Enlever</string>
                </property>
               </widget>
              </item>
@@ -1719,22 +1719,36 @@
                  <attribute name="title">
                   <string>Carte</string>
                  </attribute>
-                 <layout class="QHBoxLayout" name="hlMap">
+                 <layout class="QVBoxLayout" name="vlMap">
                   <property name="spacing">
-                   <number>1</number>
+                   <number>6</number>
                   </property>
                   <property name="leftMargin">
-                   <number>1</number>
+                   <number>9</number>
                   </property>
                   <property name="topMargin">
-                   <number>1</number>
+                   <number>9</number>
                   </property>
                   <property name="rightMargin">
-                   <number>1</number>
+                   <number>9</number>
                   </property>
                   <property name="bottomMargin">
-                   <number>1</number>
+                   <number>9</number>
                   </property>
+                  <item>
+                   <widget class="QComboBox" name="cbMap">
+                    <item>
+                     <property name="text">
+                      <string>Utilisation par département (relative à la population)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Utilisation par département (absolue)</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
                  </layout>
                 </widget>
                </widget>
@@ -1905,7 +1919,7 @@
      <x>0</x>
      <y>0</y>
      <width>1414</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>

@@ -245,7 +245,7 @@ void AllFirstNamesMW::init_ui_curves(){
 }
 
 void AllFirstNamesMW::init_ui_map(){
-    mapW = new MapW(ui.hlMap);
+    mapW = new MapW(ui.vlMap);
 }
 
 
@@ -287,6 +287,11 @@ void AllFirstNamesMW::init_connections(){
     connect(ui.pbPrevious, &QPushButton::clicked, this, &AllFirstNamesMW::previous_name);
     connect(ui.pbNext, &QPushButton::clicked, this, &AllFirstNamesMW::next_name);
 
+    connect(ui.cbMap, &QComboBox::currentTextChanged, this, [&]{
+        if(data.currentName.v.length() > 0)
+            update_displayed_map(data.currentName);
+        }
+    );
 //    connect(ui.twListNames, &QTabWidget::currentChanged, this, [&](int index){
 
 //        if(index == 0){
@@ -346,7 +351,7 @@ void AllFirstNamesMW::init_connections_lists(){
     connect(ui.rbSortPopS, &QRadioButton::toggled, this, [&](){update_filters_from_ui();});
 
     // last name
-    connect(ui.leLastName, &QLineEdit::textChanged, this, [&](){update_displayed_info();});
+    connect(ui.leLastName, &QLineEdit::textChanged, this, [&](){update_displayed_current_name_infos();});
 
     // list view names
     connect(filteredNamesV, &QListView::entered, this, [&](const QModelIndex &index){
@@ -358,7 +363,7 @@ void AllFirstNamesMW::init_connections_lists(){
             return;
         }
         data.currentName = n;
-        update_displayed_info();
+        update_displayed_current_name_infos();
     });
     connect(filteredNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
 
@@ -367,7 +372,7 @@ void AllFirstNamesMW::init_connections_lists(){
             return;
         }
         data.currentName = n;
-        update_displayed_info();
+        update_displayed_current_name_infos();
     });
 
     connect(savedNamesV, &QListView::entered, this, [&](const QModelIndex &index){
@@ -379,7 +384,7 @@ void AllFirstNamesMW::init_connections_lists(){
             return;
         }
         data.currentName = n;
-        update_displayed_info();
+        update_displayed_current_name_infos();
     });
     connect(savedNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
 
@@ -388,7 +393,7 @@ void AllFirstNamesMW::init_connections_lists(){
             return;
         }
         data.currentName = n;
-        update_displayed_info();
+        update_displayed_current_name_infos();
     });
 
     connect(removedNamesV, &QListView::entered, this, [&](const QModelIndex &index){
@@ -400,7 +405,7 @@ void AllFirstNamesMW::init_connections_lists(){
             return;
         }
         data.currentName = n;
-        update_displayed_info();
+        update_displayed_current_name_infos();
     });
     connect(removedNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
 
@@ -409,7 +414,7 @@ void AllFirstNamesMW::init_connections_lists(){
             return;
         }
         data.currentName = n;
-        update_displayed_info();
+        update_displayed_current_name_infos();
     });
 }
 
@@ -844,7 +849,7 @@ void AllFirstNamesMW::update_filtered_list(){
     filteredNamesV->viewport()->update();
     Bench::stop();
 
-    update_displayed_info();
+    update_displayed_current_name_infos();
 }
 
 
@@ -999,7 +1004,7 @@ void AllFirstNamesMW::update_display_from_ui(){
     }
 
     update_filtered_list();
-    update_displayed_info();
+    update_displayed_current_name_infos();
 }
 
 //void MainWindow::update_saved_list(){
@@ -1051,30 +1056,94 @@ bool AllFirstNamesMW::save_saved_names_file(const QString &path) const{
 }
 
 
-void AllFirstNamesMW::update_displayed_info(){
+void AllFirstNamesMW::update_displayed_name(FirstNameV name){
 
-    if(data.currentName.v.length() == 0){
-        return;
-    }
-
-    Bench::start("[update_displayed_info]");
-
-
-    const auto gr = data.pData.infosPerName[data.currentName].genderRepartition;
+    const auto gr = data.pData.infosPerName[name].genderRepartition;
     const QColor backgroundCol = settings.display.genderRepartitionsBackgroundColors[gr];
     const QColor foregroundCol = settings.display.genderRepartitionsForegroundColors[gr];
-
     ui.laFirstName->setStyleSheet(QSL("QLabel[objectName^=\"laFirstName\"] { color:rgb(")
-        % QString::number(foregroundCol.red()) % "," % QString::number(foregroundCol.green()) % "," % QString::number(foregroundCol.blue()) % QSL("); }"));
+                                  % QString::number(foregroundCol.red()) % "," % QString::number(foregroundCol.green()) % "," % QString::number(foregroundCol.blue()) % QSL("); }"));
     ui.laLastName->setStyleSheet(QSL("QLabel[objectName^=\"laLastName\"] { color:rgb(")
-        % QString::number(foregroundCol.red()) % "," % QString::number(foregroundCol.green()) % "," % QString::number(foregroundCol.blue()) % QSL("); }"));
+                                 % QString::number(foregroundCol.red()) % "," % QString::number(foregroundCol.green()) % "," % QString::number(foregroundCol.blue()) % QSL("); }"));
     ui.wCurrentName->setStyleSheet(QSL("QWidget[objectName^=\"wCurrentName\"] { background-color:rgb(")
-        % QString::number(backgroundCol.red()) % "," % QString::number(backgroundCol.green()) % "," % QString::number(backgroundCol.blue()) % QSL("); }"));
+                                   % QString::number(backgroundCol.red()) % "," % QString::number(backgroundCol.green()) % "," % QString::number(backgroundCol.blue()) % QSL("); }"));
 
-    ui.laFirstName->setText(firstNameStartStyle % data.currentName.v % endStyle);
+    ui.laFirstName->setText(firstNameStartStyle % name.v % endStyle);
     ui.laLastName->setText(lastNameStartStyle % ui.leLastName->text().toUpper() % endStyle);
 
-    const auto &nameInfo = data.pData.infosPerName[data.currentName];
+}
+
+void AllFirstNamesMW::update_displayed_map(FirstNameV name){
+
+    double max = 0.;
+    std::unordered_map<Dep, double> factors;
+    factors.reserve(data.pData.infosPerDepartment.size());
+    for(auto &depInfos : data.pData.infosPerDepartment){
+
+        if(depInfos.first == Dep::Inconnu){
+            continue;
+        }
+
+        if(ui.cbMap->currentIndex() == 0){
+            factors[depInfos.first] = depInfos.second.infosPerName[name].count.v*(1.0/depInfos.second.factorToMax);
+        }else{
+            factors[depInfos.first] = depInfos.second.infosPerName[name].count.v;
+        }
+        if(factors[depInfos.first] > max){
+            max = factors[depInfos.first];
+        }
+    }
+
+    if(max != 0){
+        for(auto &v : factors){
+            v.second /= max;
+        }
+    }
+
+    mapW->fill_map(factors);
+}
+
+void AllFirstNamesMW::update_displayed_curve(FirstNameV name){
+
+    const auto &nameInfo = data.pData.infosPerName[name];
+
+    // curves
+    size_t max = 0;
+    std::vector<double> years;
+    for(size_t ii = 1900; ii <= 2020; ++ii){
+        years.emplace_back(static_cast<double>(ii));
+    }
+
+    std::vector<double> counts;
+    for(auto& info : data.pData.infosPerYear){
+        if(info.first.v == -1){
+            continue;
+        }
+
+        auto count = info.second.counterName[nameInfo.name];
+        counts.emplace_back(static_cast<double>(count.v));
+        if(count.v > max){
+            max = count.v;
+        }
+    }
+    if(max == 0){
+        max = 10;
+    }
+
+    if(ui.cbCurves->currentIndex() == 0){
+
+        curveW->set_title("");
+        curveW->set_x_title("Années");
+        curveW->set_y_title("Nombre");
+        curveW->set_x_range(1900, 2020);
+        curveW->set_y_range(0, 1.2*max);
+        curveW->set_points(years, counts);
+    }
+}
+
+void AllFirstNamesMW::update_displayed_others_infos(FirstNameV name){
+
+    const auto &nameInfo = data.pData.infosPerName[name];
     if(nameInfo.intervalApparition.start.v != -1){
         ui.laStartYear->setText(QString::number(nameInfo.intervalApparition.start.v));
     }else{
@@ -1122,95 +1191,25 @@ void AllFirstNamesMW::update_displayed_info(){
         lw[4]->setText(from_view(get_name(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].popularity)));
         ++ii;
     }
+}
 
-    // curves
-    size_t max = 0;
-    std::vector<double> years;
-    for(size_t ii = 1900; ii <= 2020; ++ii){
-        years.emplace_back(static_cast<double>(ii));
+void AllFirstNamesMW::update_displayed_current_name_infos(){
+
+    if(data.currentName.v.length() == 0){
+        return;
     }
 
-    std::vector<double> counts;
-    for(auto& info : data.pData.infosPerYear){
-        if(info.first.v == -1){
-            continue;
-        }
+    Bench::start("[update_displayed_info]");
 
-        auto count = info.second.counterName[nameInfo.name];
-        counts.emplace_back(static_cast<double>(count.v));
-        if(count.v > max){
-            max = count.v;
-        }
-    }
-    if(max == 0){
-        max = 10;
-    }
-
-    if(ui.cbCurves->currentIndex() == 0){
-
-        curveW->set_title("");
-        curveW->set_x_title("Années");
-        curveW->set_y_title("Nombre");
-        curveW->set_x_range(1900, 2020);
-        curveW->set_y_range(0, 1.2*max);
-        curveW->set_points(years, counts);
-    }
+    update_displayed_name(data.currentName);
+    update_displayed_others_infos(data.currentName);
+    update_displayed_curve(data.currentName);
+    update_displayed_map(data.currentName);
 
     Bench::stop();
     Bench::display();
     Bench::reset();
 
-////        QVector<QPointF> womenPoints,menPoints,othersPoints;
-////        womenPoints.resize(2019-1900);
-////        menPoints.resize(2019-1900);
-////        othersPoints.resize(2019-1900);
-
-////        int id = 0;
-////        for(int ii = 1900; ii < 2019; ++ii){
-////            if(nbNamesPerYear.count(Year{ii}) == 0){
-////                womenPoints[id]     = QPointF(ii,std::numeric_limits<qreal>::epsilon());
-////                menPoints[id]       = QPointF(ii,std::numeric_limits<qreal>::epsilon());
-////                othersPoints[id]    = QPointF(ii,std::numeric_limits<qreal>::epsilon());
-////            }else{
-
-////                womenPoints[id]     = QPointF(ii,std::log(std::numeric_limits<qreal>::epsilon()+std::get<0>(nbNamesPerYear[Year{ii}])));
-////                menPoints[id]       = QPointF(ii,std::log(std::numeric_limits<qreal>::epsilon()+std::get<1>(nbNamesPerYear[Year{ii}])));
-////                othersPoints[id]    = QPointF(ii,std::log(std::numeric_limits<qreal>::epsilon()+std::get<2>(nbNamesPerYear[Year{ii}])));
-
-////            }
-////            ++id;
-////        }
-
-////        seriesWomen->replace(womenPoints);
-////        seriesMen->replace(menPoints);
-////        seriesOthers->replace(othersPoints);
-
-//        // update image
-//        std::map<DepartmentId,size_t> countPerDepartment;
-//        int maxCurrentName = 0;
-//        for(const auto &d : departmentsPixels){
-
-//            //countPerDepartment[d.first] = std::get<1>(currentInfo->departmentsInfo[get_id(static_cast<DepartmentC>(d.first.v))]).v;//currentInfo->nbPerDepartment_test[get_department_id(static_cast<DepartmentC>(d.first.v))];
-
-////            countPerDepartment[d.first] = currentInfo->nbPerDepartment[d.first];
-//            if(maxCurrentName < countPerDepartment[d.first]){
-//                maxCurrentName = countPerDepartment[d.first];
-//            }
-//        }
-
-////        double maxLog = std::log(maxDepartmentsNameNb_test);
-////        for(const auto &d : departmentsPixels){
-
-////            double factor = 0;
-////            if(countPerDepartment[d.first] > 0){
-////                factor = std::log(countPerDepartment[d.first]) / maxLog;
-////            }
-
-////            QColor colPix = factor_to_colormap_value(factor);
-////            for(const auto &pixels : d.second){
-////                image.setPixelColor(pixels, colPix);
-////            }
-////        }
 
 //    }else{
 
@@ -1231,13 +1230,10 @@ void AllFirstNamesMW::update_displayed_info(){
 //        ui.pbRemoveCurrentName->setEnabled(false);
 //    }
 
-////    chartView->update();
 
-
-//    // update map image
-//    mapW->set_image(image);
-//    update();
 }
+
+
 
 //void MainWindow::keep_current_name(){
 
@@ -1323,7 +1319,7 @@ void AllFirstNamesMW::next_name(){
     std::vector<size_t> ids;
     size_t id = 0;
     for(const auto &name : data.filteredNames){
-        if(!data.namesState[name].removed){
+        if(!data.namesState[name].removed && data.namesState[name].filtered){
             ids.push_back(id);
         }
         id++;
@@ -1334,7 +1330,7 @@ void AllFirstNamesMW::next_name(){
 
     FirstNameV n{data.filteredNames[ids[genId]]};
     data.currentName = n;
-    update_displayed_info();
+    update_displayed_current_name_infos();
 }
 
 void AllFirstNamesMW::previous_name(){
@@ -1345,7 +1341,7 @@ void AllFirstNamesMW::previous_name(){
 
     data.currentName = data.previousNames.top();
     data.previousNames.pop();
-    update_displayed_info();
+    update_displayed_current_name_infos();
 }
 
 //void MainWindow::previous_name(){
