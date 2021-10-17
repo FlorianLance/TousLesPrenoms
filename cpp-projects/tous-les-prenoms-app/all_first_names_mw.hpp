@@ -117,10 +117,10 @@ public slots:
 
 
     // actions
-//    void keep_current_name();
-//    void next_name();
-//    void previous_name();
-//    void remove_current_name();
+    void keep_current_name(){}
+    void next_name();
+    void previous_name();
+    void remove_current_name(){}
 //    void retire_selection_from_saved();
 //    void retire_all_from_saved();
 
@@ -166,39 +166,24 @@ public:
     um<GR, QPushButton*> foregroundGendersColorsB;
     um<GR, QPushButton*> backgroundGendersColorsB;
     um<GR, std::unique_ptr<QColorDialog>> foregroundGendersColorsD;
-    um<GR, std::unique_ptr<QColorDialog>> backgroundGendersColorsD;
-//    QColorDialog femaleCol1D;
-//    QColorDialog femaleCol2D;
-//    QColorDialog maleCol1D;
-//    QColorDialog maleCol2D;
-//    QColorDialog bothCol1D;
-//    QColorDialog bothCol2D;
-//    QColorDialog otherCol1D;
-//    QColorDialog otherCol2D;
+    um<GR, std::unique_ptr<QColorDialog>> backgroundGendersColorsD;    
+    std::vector<std::vector<QLabel*>> tablePeriodsInfoWidgets;
+    std::vector<std::vector<QLabel*>> tableDepartmentsInfoWidgets;
 
     QButtonGroup sortGroup;
-    // # curves
-//    QChartView *chartView = nullptr;
-//    QValueAxis *axisX = nullptr;
-//    QValueAxis *axisY = nullptr;
-//    QLineSeries *seriesWomen = nullptr;
-//    QLineSeries *seriesMen = nullptr;
-//    QLineSeries *seriesOthers = nullptr;
-
-    Paths paths;
-    Settings settings;
-    Data data;
-
 
     // rand
     std::unique_ptr<std::mt19937> gen = nullptr;
     std::random_device rd;
 
+    // threads / workers
     QThread listWorkerT;
     std::unique_ptr<ListWorker> listWorker;
 
-    std::vector<std::vector<QLabel*>> tablePeriodsInfoWidgets;
-    std::vector<std::vector<QLabel*>> tableDepartmentsInfoWidgets;
+    // data
+    Paths paths;
+    Settings settings;
+    Data data;
 
 private:
 

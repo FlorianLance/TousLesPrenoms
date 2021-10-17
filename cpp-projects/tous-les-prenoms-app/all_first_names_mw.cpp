@@ -262,15 +262,15 @@ void AllFirstNamesMW::init_ui_display(){
     backgroundGendersColorsB = {
         {GR::OnlyFemale,    ui.pbTotalFemaleColorBackground},
         {GR::OnlyMale,      ui.pbTotalMaleColorBackground},
-        {GR::MostlyMale,    ui.pbMajorFemaleColorBackground},
-        {GR::MostlyFemale,  ui.pbMajorMaleColorBackground},
+        {GR::MostlyMale,    ui.pbMajorMaleColorBackground},
+        {GR::MostlyFemale,  ui.pbMajorFemaleColorBackground},
         {GR::FemaleMale,    ui.pbBalancedFemaleMaleColorBackground}
     };
     foregroundGendersColorsB = {
         {GR::OnlyFemale,    ui.pbTotalFemaleColorName},
         {GR::OnlyMale,      ui.pbTotalMaleColorName},
-        {GR::MostlyMale,    ui.pbMajorFemaleColorName},
-        {GR::MostlyFemale,  ui.pbMajorMaleColorName},
+        {GR::MostlyMale,    ui.pbMajorMaleColorName},
+        {GR::MostlyFemale,  ui.pbMajorFemaleColorName},
         {GR::FemaleMale,    ui.pbBalancedFemaleMaleColorName}
     };
 }
@@ -281,6 +281,11 @@ void AllFirstNamesMW::init_connections(){
     init_connections_filters();
     init_connections_display();
 
+
+    connect(ui.pbKeepCurrentName, &QPushButton::clicked, this, &AllFirstNamesMW::keep_current_name);
+    connect(ui.pbRemoveCurrentName, &QPushButton::clicked, this, &AllFirstNamesMW::remove_current_name);
+    connect(ui.pbPrevious, &QPushButton::clicked, this, &AllFirstNamesMW::previous_name);
+    connect(ui.pbNext, &QPushButton::clicked, this, &AllFirstNamesMW::next_name);
 
 //    connect(ui.twListNames, &QTabWidget::currentChanged, this, [&](int index){
 
@@ -322,10 +327,6 @@ void AllFirstNamesMW::init_connections(){
 //    });
 
 
-//    connect(ui.pbKeepCurrentName, &QPushButton::clicked, this, &MainWindow::keep_current_name);
-//    connect(ui.pbRemoveCurrentName, &QPushButton::clicked, this, &MainWindow::remove_current_name);
-//    connect(ui.pbPrevious, &QPushButton::clicked, this, &MainWindow::previous_name);
-//    connect(ui.pbNext, &QPushButton::clicked, this, &MainWindow::next_name);
 
 //    connect(ui.pbRetireSelectionFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_selection_from_saved);
 //    connect(ui.pbRetireAllFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_all_from_saved);
@@ -1304,32 +1305,48 @@ void AllFirstNamesMW::update_displayed_info(){
 //    update_displayed_info();
 //}
 
-//void MainWindow::next_name(){
+void AllFirstNamesMW::next_name(){
 
 //    if(currentInfo != nullptr){
 //        previousInfo.emplace(currentInfo);
 //    }
 
-////    // choose new random name among filtered ones
-////    if(filteredNamesInfos_test.size() > 0){
+    if(data.filteredNames.size() < 1){
+        return;
+    }
 
-////        std::uniform_int_distribution<> distrib(0, static_cast<int>(filteredNamesInfos_test.size())-1);
-////        auto id = distrib(*gen);
+    if(data.currentName.v.length() != 0){
+        data.previousNames.push(data.currentName);
+    }
 
-////        for(int ii = 0; ii < ui.lwFilteredNames->count(); ++ii){
-////            if(ui.lwFilteredNames->item(ii)->text() == filteredNamesInfos_test[static_cast<size_t>(id)]->firstName.v){
-////                ui.lwFilteredNames->setCurrentRow(ii);
-////            }
-////        }
-////    }else{
-////        currentInfo = nullptr;
-////    }
 
-//    ui.twListNames->setCurrentIndex(0);
+    std::vector<size_t> ids;
+    size_t id = 0;
+    for(const auto &name : data.filteredNames){
+        if(!data.namesState[name].removed){
+            ids.push_back(id);
+        }
+        id++;
+    }
 
-//    // update current displayed
-//    update_displayed_info();
-//}
+    std::uniform_int_distribution<> distrib(0, static_cast<int>(ids.size())-1);
+    auto genId = distrib(*gen);
+
+    FirstNameV n{data.filteredNames[ids[genId]]};
+    data.currentName = n;
+    update_displayed_info();
+}
+
+void AllFirstNamesMW::previous_name(){
+
+    if(data.previousNames.size() == 0){
+        return;
+    }
+
+    data.currentName = data.previousNames.top();
+    data.previousNames.pop();
+    update_displayed_info();
+}
 
 //void MainWindow::previous_name(){
 

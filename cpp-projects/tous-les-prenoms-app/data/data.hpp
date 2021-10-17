@@ -1,6 +1,9 @@
 
 #pragma once
 
+// std
+#include <stack>
+
 // local
 #include "processed_data.hpp"
 #include "paths.hpp"
@@ -26,6 +29,8 @@ public:
     std::vector<FirstNameV> filteredNames;
     std::vector<FirstNameV> savedNames;
     std::vector<FirstNameV> removedNames;
+
+    std::stack<FirstNameV> previousNames;
 
     size_t countFiltered = 0;
     size_t countSaved = 0;

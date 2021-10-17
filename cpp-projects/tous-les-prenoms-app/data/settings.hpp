@@ -90,13 +90,13 @@ struct FilterSettings{
 };
 
 struct DisplaySettings{
-    std::unordered_map<GenderRepartition, QColor> genderRepartitionsForegroundColors ={
-        {GenderRepartition::OnlyFemale,      {141,226,148}},
-        {GenderRepartition::OnlyMale,        {185,177,207}},
-        {GenderRepartition::MostlyMale,      {185,177,207}},
-        {GenderRepartition::MostlyFemale,    {141,226,148}},
-        {GenderRepartition::FemaleMale,      {115,187,215}},
-        {GenderRepartition::Unknow,          {255,255,255}}
+    std::unordered_map<GenderRepartition, QColor> genderRepartitionsBackgroundColors ={
+        {GenderRepartition::OnlyFemale,      QColor{141,226,148}},
+        {GenderRepartition::OnlyMale,        QColor{185,177,207}},
+        {GenderRepartition::MostlyMale,      QColor{185,177,207}},
+        {GenderRepartition::MostlyFemale,    QColor{141,226,148}},
+        {GenderRepartition::FemaleMale,      QColor{115,187,215}},
+        {GenderRepartition::Unknow,          QColor{255,255,255}}
 //        {GenderRepartition::OnlyOther,       {223,171,140}},
 //        {GenderRepartition::MostlyOther,     {223,171,140}},
 //        {GenderRepartition::FemaleOther,     {115,187,215}},
@@ -104,13 +104,13 @@ struct DisplaySettings{
 //        {GenderRepartition::FemaleMaleOther, {115,187,215}},        
     };
 
-    std::unordered_map<GenderRepartition, QColor> genderRepartitionsBackgroundColors ={
-        {GenderRepartition::OnlyFemale,      {22,90,28}},
-        {GenderRepartition::OnlyMale,        {69,60,98}},
-        {GenderRepartition::MostlyMale,      {69,60,98}},
-        {GenderRepartition::MostlyFemale,    {22,90,28}},
-        {GenderRepartition::FemaleMale,      {31,85,105}},
-        {GenderRepartition::Unknow,          {0,0,0}}
+    std::unordered_map<GenderRepartition, QColor> genderRepartitionsForegroundColors ={
+        {GenderRepartition::OnlyFemale,      QColor{22,90,28}},
+        {GenderRepartition::OnlyMale,        QColor{69,60,98}},
+        {GenderRepartition::MostlyMale,      QColor{69,60,98}},
+        {GenderRepartition::MostlyFemale,    QColor{22,90,28}},
+        {GenderRepartition::FemaleMale,      QColor{31,85,105}},
+        {GenderRepartition::Unknow,          QColor{0,0,0}}
 //        {GenderRepartition::MostlyOther,     {125,68,34}},
 //        {GenderRepartition::OnlyOther,       {125,68,34}},
 //        {GenderRepartition::FemaleOther,     {31,85,105}},
