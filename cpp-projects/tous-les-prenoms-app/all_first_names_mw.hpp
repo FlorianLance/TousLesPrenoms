@@ -17,6 +17,8 @@
 #include <QButtonGroup>
 #include <QListView>
 #include <QSplashScreen>
+#include <QSortFilterProxyModel>
+
 //#include <QtCharts>
 
 // local
@@ -42,6 +44,7 @@ template<typename T1, typename T2>
 using um = std::unordered_map<T1,T2>;
 
 
+
 class SplashScreen : public QSplashScreen{
 
     Q_OBJECT
@@ -62,6 +65,31 @@ protected:
 private:
     int m_progress = 0;
 };
+
+class ListView : public QListView{
+
+//    QSize viewportSizeHint() const override {
+
+//        if (model()->rowCount() == 0){
+//            return QSize(width(), 0);
+//        }
+
+////        int nToShow = _nItemsToShow < model()->rowCount() ? _nItemsToShow : model()->rowCount();
+//        qDebug() << "size hint " << model()->rowCount() << QSize(width(), model()->rowCount()*sizeHintForRow(0));
+//        return QSize(width(), model()->rowCount()*sizeHintForRow(0));
+//    }
+//    QSize maximumSizeHint () const override{
+
+//    }
+};
+
+
+//QSize ProposalListView::sizeHint() const
+//{
+//    if (model()->rowCount() == 0) return QSize(width(), 0);
+//    int nToShow = _nItemsToShow < model()->rowCount() ? _nItemsToShow : model()->rowCount();
+//    return QSize(width(), nToShow*sizeHintForRow(0));
+//}
 
 
 
@@ -101,18 +129,12 @@ public:
     void update_display_from_ui();
 
 
-    // I/O
-    //    bool save_settings_file(const QString &path) const;
-    bool save_saved_names_file(const QString &path) const;
-    //    bool save_removed_names_file(const QString &path) const;
 
 protected:
+
     bool eventFilter(QObject *obj, QEvent *event);//in header
 
 public slots:
-
-
-    void update_filtered_list();
 
     void update_displayed_current_name_infos();
     void update_displayed_name(FirstNameV name);
@@ -120,32 +142,29 @@ public slots:
     void update_displayed_curve(FirstNameV name);
     void update_displayed_others_infos(FirstNameV name);
 
+    void update_filtered_list();
+    void update_saved_list();
+    void update_removed_list();
 
     // actions
-    void keep_current_name(){}
-    void next_name();
+    // # common
     void previous_name();
-    void remove_current_name(){}
-//    void retire_selection_from_saved();
-//    void retire_all_from_saved();
-
-    // lists and display
-//    bool is_name_filtered(const NameInfo &info);
-
-
-//    void update_saved_list();
-//    void update_removed_list();
-
-
-
+    // # filtered
+    void next_filtered_name();
+    // # save
+    void save_current_name();
+    void unsave_current_name();
+    void clear_all_saved_names();
+    void next_saved_name();
+    // # remove
+    void remove_current_name();
+    void unremove_current_name();
+    void next_removed_name();
+    void clear_all_removed_names();
 
 signals:
 
     void apply_filter_signal(Data *data, FilterSettings filterS);
-
-
-    // utility
-
 
 
 public:
@@ -155,13 +174,13 @@ public:
     Ui::AllFirstNameW ui;
     MapW *mapW = nullptr;
 
-    QListView *filteredNamesV = nullptr;
+    ListView *filteredNamesV = nullptr;
     std::unique_ptr<ui::ListNamesM> filteredNamesM = nullptr;
 
-    QListView *savedNamesV = nullptr;
+    ListView *savedNamesV = nullptr;
     std::unique_ptr<ui::ListNamesM> savedNamesM = nullptr;
 
-    QListView *removedNamesV = nullptr;
+    ListView *removedNamesV = nullptr;
     std::unique_ptr<ui::ListNamesM> removedNamesM = nullptr;
 
     CurveW *curveW = nullptr;
@@ -203,4 +222,5 @@ private:
 
 
 }
+
 

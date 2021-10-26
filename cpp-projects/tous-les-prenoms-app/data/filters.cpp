@@ -514,21 +514,6 @@ void Filters::apply(const FilterSettings &s, Data &data){
             data.currentName = data.filteredNames[0];
         }
     }
-
-    // fill departments
-//    insideDepartments.clear();
-//    for(const auto &departementStr : insideDepartmentsTextes){
-//        if(departementStr.length() > 0){
-//            //            if(auto dep = get_department(departementStr.toInt()); dep.has_value()){
-//            //                if(dep.value() != DepartmentC::Inconnu){
-//            //                    insideDepartments.push_back(dep.value());
-//            //                }
-//            //            }
-
-//        }
-//    }
-
-
 }
 
 

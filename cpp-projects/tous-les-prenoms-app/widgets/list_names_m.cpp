@@ -9,57 +9,81 @@ using namespace tool::ui;
 
 
 int ListNamesM::rowCount(const QModelIndex &) const{
+
     if(nData == nullptr){
         return 0;
+    }
+
+    if(!initialized){
+        return nData->namesState.size();
     }
 
     if(m_mode == Mode::Filtered){
         return nData->countFiltered;
     }else if(m_mode == Mode::Saved){
         return nData->countSaved;
+    }else if(m_mode == Mode::Removed){
+        return nData->countRemoved;
     }
-    return nData->countRemoved;
 }
 
 QVariant ListNamesM::data(const QModelIndex &index, int role) const{
 
-    if (!index.isValid() || (nData == nullptr)){
+    if (!index.isValid() || (nData == nullptr) || !initialized){
         return QVariant();
     }
 
     if (role == Qt::DisplayRole){
+
         if(m_mode == Mode::Filtered){
-            return nData->filteredNames[index.row()].v.toString();
+            if(index.row() < static_cast<int>(nData->filteredNames.size())){
+                return nData->filteredNames[index.row()].v.toString();
+            }
         }else if(m_mode == Mode::Saved){
-            return nData->savedNames[index.row()].v.toString();
+            if(index.row() < static_cast<int>(nData->savedNames.size())){
+                return nData->savedNames[index.row()].v.toString();
+            }
         }else if(m_mode == Mode::Removed){
-            return nData->removedNames[index.row()].v.toString();
+            if(index.row() < static_cast<int>(nData->removedNames.size())){
+                return nData->removedNames[index.row()].v.toString();
+            }
         }
+        return "";
+
     }else if (role == Qt::BackgroundRole){
 
         if(m_mode == Mode::Filtered){
-            auto gr = nData->pData.infosPerName[nData->filteredNames[index.row()]].genderRepartition;
-            return dSettings->genderRepartitionsBackgroundColors[gr];
+            if(index.row() < static_cast<int>(nData->filteredNames.size())){
+                return dSettings->genderRepartitionsBackgroundColors[nData->pData.infosPerName[nData->filteredNames[index.row()]].genderRepartition];
+            }
+        }else if(m_mode == Mode::Saved){            
+            if(index.row() < static_cast<int>(nData->savedNames.size())){
+                return dSettings->genderRepartitionsBackgroundColors[nData->pData.infosPerName[nData->savedNames[index.row()]].genderRepartition];
+            }
+        }else if(m_mode == Mode::Removed){            
+            if(index.row() < static_cast<int>(nData->removedNames.size())){
+                return dSettings->genderRepartitionsBackgroundColors[nData->pData.infosPerName[nData->removedNames[index.row()]].genderRepartition];
+            }
         }
+        return QColor(255,255,255);
 
     }else if (role == Qt::ForegroundRole){
 
         if(m_mode == Mode::Filtered){
-            auto gr = nData->pData.infosPerName[nData->filteredNames[index.row()]].genderRepartition;
-            return dSettings->genderRepartitionsForegroundColors[gr];
+            if(index.row() < static_cast<int>(nData->filteredNames.size())){
+                return dSettings->genderRepartitionsForegroundColors[nData->pData.infosPerName[nData->filteredNames[index.row()]].genderRepartition];
+            }
+        }else if(m_mode == Mode::Saved){
+            if(index.row() < static_cast<int>(nData->savedNames.size())){
+                return dSettings->genderRepartitionsForegroundColors[nData->pData.infosPerName[nData->savedNames[index.row()]].genderRepartition];
+            }
+        }else if(m_mode == Mode::Removed){
+            if(index.row() < static_cast<int>(nData->removedNames.size())){
+                return dSettings->genderRepartitionsForegroundColors[nData->pData.infosPerName[nData->removedNames[index.row()]].genderRepartition];
+            }
         }
-//        nData->pData.infosPerName[index.row()].genderRepartition;
 
-//        if(m_mode == Mode::Filtered){
-//            return dSettings->genderRepartitionsForegroundColors[gr];
-//        }
-//        ndData->filteredNames;
-//        if(index.column() == 0){
-//            return QColor(Qt::black);
-//        }else if (index.column() == 1){
-//            auto id = order[index.row()];
-//            return std::get<2>(elements.at(id)) ? QColor(Qt::green) : QColor(Qt::darkYellow);
-//        }
+        return QColor(255,255,255);
     }//else if (role == Qt::TextAlignmentRole){
 //        if(index.column() == 0){
 //            return Qt::AlignLeft;
@@ -69,17 +93,6 @@ QVariant ListNamesM::data(const QModelIndex &index, int role) const{
 //    }
 
     return QVariant();
-}
-
-//QVariant ListNamesM::headerData(int section, Qt::Orientation orientation, int role) const{
-
-//    return QVariant();
-//}
-
-void ListNamesM::update(){
-    beginResetModel();
-//    emit dataChanged(QModelIndex(0,0))
-    endResetModel();
 }
 
 

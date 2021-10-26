@@ -24,12 +24,9 @@ public:
     ProcessedData pData;
 
     std::unordered_map<FirstNameV, NameState> namesState;
-
-
     std::vector<FirstNameV> filteredNames;
     std::vector<FirstNameV> savedNames;
     std::vector<FirstNameV> removedNames;
-
     std::stack<FirstNameV> previousNames;
 
     size_t countFiltered = 0;
@@ -38,24 +35,13 @@ public:
 
     FirstNameV currentName;
 
-    bool init(){
+    bool init();
 
-        // read database file
-        if(!iData.read_csv_file(Paths::csvFilePath)){
-            return false;
-        }
-
-        // process data
-        pData.generate(iData);
-
-        namesState.reserve(iData.names.size());
-        for(const auto &nameInfo : iData.namesInfo){
-            namesState[nameInfo.first] = {true, false, false};
-        }
-        filteredNames.resize(iData.names.size());
-
-        return true;
-    }
+    // I/O
+    bool save_saved_names_file(const QString &path) const;
+    bool save_removed_names_file(const QString &path) const;
+    bool read_saved_names_file(const QString &path);
+    bool read_removed_names_file(const QString &path);
 };
 
 }

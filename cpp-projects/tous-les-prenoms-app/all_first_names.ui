@@ -1427,6 +1427,20 @@
                </spacer>
               </item>
               <item>
+               <widget class="QPushButton" name="pbRetireSelectionFromRemoved">
+                <property name="text">
+                 <string>Retirer sélection</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pbRetireAllFromRemoved">
+                <property name="text">
+                 <string>Tout retirer</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <spacer name="horizontalSpacer_7">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>

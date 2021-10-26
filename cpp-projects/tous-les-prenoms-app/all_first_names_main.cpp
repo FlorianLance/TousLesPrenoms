@@ -23,6 +23,7 @@ int main(int argc, char** argv){
     QLocale::setDefault(QLocale::c());
     tool::AllFirstNamesMW w;
     w.init_data();
+    w.init_ui();
     w.show();
 
 

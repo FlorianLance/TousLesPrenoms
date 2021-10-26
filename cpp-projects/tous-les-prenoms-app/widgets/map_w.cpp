@@ -22,10 +22,12 @@ MapW::MapW(QVBoxLayout *vlMap){
     vlMap->setStretch(0,1);
     vlMap->setStretch(1,20);
 
+//    l->addStretch(1);
     l->addWidget(mapW = new ui::ImageViewerW());
-    l->addWidget(gradientW = new ui::ImageViewerW());
-    l->setStretchFactor(mapW, 10);
-    l->setStretchFactor(gradientW, 1);
+//    l->addWidget(gradientW = new ui::ImageViewerW());
+//    l->addStretch(1);
+//    l->setStretchFactor(mapW, 10);
+//    l->setStretchFactor(gradientW, 2);
 
     QFile departmentsColorsFile(Paths::departmentsColorsFilePath);
     if(!departmentsColorsFile.open(QFile::ReadOnly | QIODevice::Text)){
@@ -57,7 +59,7 @@ MapW::MapW(QVBoxLayout *vlMap){
         return;
     }
 
-    for(int ii = 0; ii < image.width(); ++ii){
+    for(int ii = 0; ii < image.width()-200; ++ii){
         for(int jj = 0; jj < image.height(); ++jj){
             const QString pixelColorHexa  = QColor(image.pixel(ii,jj)).name();
             if(departmentPerHexaColor.count(pixelColorHexa) != 0){ // dep
@@ -73,8 +75,8 @@ MapW::MapW(QVBoxLayout *vlMap){
         }
     }
 
-    gradientW->set_image(gradient);
-    gradientW->update();
+//    gradientW->set_image(gradient);
+//    gradientW->update();
 
     mapW->set_image(image);
     mapW->update();

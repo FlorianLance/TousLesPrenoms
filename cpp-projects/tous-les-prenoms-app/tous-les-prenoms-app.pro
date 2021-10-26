@@ -78,6 +78,7 @@ LIBS +=\
 SOURCES += \
     all_first_names_main.cpp \
     all_first_names_mw.cpp \
+    data/data.cpp \
     data/filters.cpp \
     data/input_data.cpp \
     data/processed_data.cpp \

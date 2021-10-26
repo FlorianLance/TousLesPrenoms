@@ -31,7 +31,7 @@ public:
 
     static QString to_str(const QColor &c);
     static QColor to_color(QString s);
-    static QColor factor_to_colormap_value(double factor);
+    static QColor factor_to_colormap_value(double factor);        
 };
 
 

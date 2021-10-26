@@ -17,6 +17,7 @@
 #include <QRegExpValidator>
 #include <QTime>
 #include <QTimer>
+#include <QScrollBar>
 
 
 // local
@@ -53,44 +54,37 @@ AllFirstNamesMW::AllFirstNamesMW(QApplication *parent){
 
     // init randomization
     gen = std::make_unique<std::mt19937>(rd());
-
-    // read settings file
-    if(!QFile(Paths::settingsFilePath).exists()){
-        settings.save_settings_file(Paths::settingsFilePath);
-    }else{
-        settings.read_settings_file(Paths::settingsFilePath);
-    }
-
-    // set ui
-    init_ui();
-
-    // set workers
-    listWorker = std::make_unique<ListWorker>();
-    listWorker->moveToThread(&listWorkerT);
-
-    // set connections
-    init_connections();
-
-    // start thread
-    listWorkerT.start();
 }
 
 void AllFirstNamesMW::init_ui(){
 
     ui.setupUi(this);
-
     init_ui_lists();
     init_ui_filters();
     init_ui_display();
     init_ui_curves();
     init_ui_map();
 
+    // set workers
+    listWorker = std::make_unique<ListWorker>();
+    listWorker->moveToThread(&listWorkerT);
+
+    // start thread
+    listWorkerT.start();
+
     update_ui_from_settings();
+
+    // set connections
+    init_connections();
+
+
+    update_filters_from_ui();
+//    emit apply_filter_signal(&data, settings.filters);
 }
 
 void AllFirstNamesMW::init_ui_lists(){
 
-    ui.vlFiltered->addWidget(filteredNamesV = new QListView());
+    ui.vlFiltered->addWidget(filteredNamesV = new ListView());
     filteredNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Filtered);
     filteredNamesV->setMouseTracking(true);
     filteredNamesM->nData = &data;
@@ -98,7 +92,8 @@ void AllFirstNamesMW::init_ui_lists(){
     filteredNamesV->setModel(filteredNamesM.get());
     filteredNamesV->viewport()->installEventFilter(this);
 
-    ui.vlSaved->insertWidget(0, savedNamesV = new QListView());
+
+    ui.vlSaved->insertWidget(0, savedNamesV = new ListView());
     savedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Saved);
     savedNamesV->setMouseTracking(true);
     savedNamesM->nData = &data;
@@ -106,13 +101,29 @@ void AllFirstNamesMW::init_ui_lists(){
     savedNamesV->setModel(savedNamesM.get());
     savedNamesV->viewport()->installEventFilter(this);
 
-    ui.vlRemoved->insertWidget(0, removedNamesV = new QListView());
+
+    ui.vlRemoved->insertWidget(0, removedNamesV = new ListView());
     removedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Removed);
     removedNamesV->setMouseTracking(true);
     removedNamesM->nData = &data;
     removedNamesM->dSettings = &settings.display;
     removedNamesV->setModel(removedNamesM.get());
     removedNamesV->viewport()->installEventFilter(this);
+
+    removedNamesM->update();
+    savedNamesM->update();
+    filteredNamesM->update();
+
+    filteredNamesM->initialized = true;
+    savedNamesM->initialized = true;
+    removedNamesM->initialized = true;
+
+
+
+//    QCoreApplication::processEvents();
+
+
+//    QCoreApplication::processEvents();
 }
 
 void AllFirstNamesMW::init_ui_filters(){
@@ -282,59 +293,17 @@ void AllFirstNamesMW::init_connections(){
     init_connections_display();
 
 
-    connect(ui.pbKeepCurrentName, &QPushButton::clicked, this, &AllFirstNamesMW::keep_current_name);
+    connect(ui.pbKeepCurrentName, &QPushButton::clicked, this, &AllFirstNamesMW::save_current_name);
     connect(ui.pbRemoveCurrentName, &QPushButton::clicked, this, &AllFirstNamesMW::remove_current_name);
     connect(ui.pbPrevious, &QPushButton::clicked, this, &AllFirstNamesMW::previous_name);
-    connect(ui.pbNext, &QPushButton::clicked, this, &AllFirstNamesMW::next_name);
+    connect(ui.pbNext, &QPushButton::clicked, this, &AllFirstNamesMW::next_filtered_name);
 
     connect(ui.cbMap, &QComboBox::currentTextChanged, this, [&]{
         if(data.currentName.v.length() > 0)
             update_displayed_map(data.currentName);
         }
     );
-//    connect(ui.twListNames, &QTabWidget::currentChanged, this, [&](int index){
 
-//        if(index == 0){
-
-//            //            if(ui.lwFilteredNames->currentRow() != -1){
-//            //                currentInfo = &namesInfos[namesId[ui.lwFilteredNames->currentItem()->text()]];
-//            //            }else{
-//            //                if(ui.lwFilteredNames->count() > 0){
-//            //                    ui.lwFilteredNames->setCurrentRow(0);
-//            //                    currentInfo = &namesInfos[namesId[ui.lwFilteredNames->currentItem()->text()]];
-//            //                }
-//            //            }
-
-//        }else if(index == 1){
-
-//            //            if(ui.lwSavedNames->currentRow() != -1){
-//            //                currentInfo = &namesInfos[namesId[ui.lwSavedNames->currentItem()->text()]];
-//            //            }else{
-//            //                if(ui.lwSavedNames->count() > 0){
-//            //                    ui.lwSavedNames->setCurrentRow(0);
-//            //                    currentInfo = &namesInfos[namesId[ui.lwSavedNames->currentItem()->text()]];
-//            //                }
-//            //            }
-
-//        }else{
-
-//            //            if(ui.lwRemoved->currentRow() != -1){
-//            //                currentInfo = &namesInfos[namesId[ui.lwRemoved->currentItem()->text()]];
-//            //            }else{
-//            //                if(ui.lwRemoved->count() > 0){
-//            //                    ui.lwRemoved->setCurrentRow(0);
-//            //                    currentInfo = &namesInfos[namesId[ui.lwRemoved->currentItem()->text()]];
-//            //                }
-//            //            }
-//        }
-
-//        update_displayed_info();
-//    });
-
-
-
-//    connect(ui.pbRetireSelectionFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_selection_from_saved);
-//    connect(ui.pbRetireAllFromSaved, &QPushButton::clicked, this,  &MainWindow::retire_all_from_saved);
 
 
 }
@@ -342,7 +311,10 @@ void AllFirstNamesMW::init_connections(){
 void AllFirstNamesMW::init_connections_lists(){
 
     // worker
-    connect(listWorker.get(), &ListWorker::list_filtered_signal, this, &AllFirstNamesMW::update_filtered_list);
+    connect(listWorker.get(), &ListWorker::list_filtered_signal, this, [&]{
+        update_filtered_list();
+        update_displayed_current_name_infos();
+    });
 
     // sorting
     connect(ui.rbSortAZ,   &QRadioButton::toggled, this, [&](){update_filters_from_ui();});
@@ -353,11 +325,16 @@ void AllFirstNamesMW::init_connections_lists(){
     // last name
     connect(ui.leLastName, &QLineEdit::textChanged, this, [&](){update_displayed_current_name_infos();});
 
-    // list view names
+    // filtered names
     connect(filteredNamesV, &QListView::entered, this, [&](const QModelIndex &index){
         if(!listFilteredMousePressed){
             return;
         }
+
+        if(index.row() >= static_cast<int>(data.filteredNames.size())){
+            return;
+        }
+
         FirstNameV n{data.filteredNames[index.row()]};
         if(data.namesState.count(n) == 0){
             return;
@@ -367,6 +344,10 @@ void AllFirstNamesMW::init_connections_lists(){
     });
     connect(filteredNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
 
+        if(index.row() >= static_cast<int>(data.filteredNames.size())){
+            return;
+        }
+
         FirstNameV n{data.filteredNames[index.row()]};
         if(data.namesState.count(n) == 0){
             return;
@@ -375,10 +356,18 @@ void AllFirstNamesMW::init_connections_lists(){
         update_displayed_current_name_infos();
     });
 
+    // saved names
+    connect(ui.pbRetireSelectionFromSaved, &QPushButton::clicked, this, &AllFirstNamesMW::unsave_current_name);
+    connect(ui.pbRetireAllFromSaved, &QPushButton::clicked, this, &AllFirstNamesMW::clear_all_saved_names);
     connect(savedNamesV, &QListView::entered, this, [&](const QModelIndex &index){
         if(!listSavedMousePressed){
             return;
         }
+
+        if(index.row() >= static_cast<int>(data.savedNames.size())){
+            return;
+        }
+
         FirstNameV n{data.savedNames[index.row()]};
         if(data.namesState.count(n) == 0){
             return;
@@ -388,6 +377,10 @@ void AllFirstNamesMW::init_connections_lists(){
     });
     connect(savedNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
 
+        if(index.row() >= static_cast<int>(data.savedNames.size())){
+            return;
+        }
+
         FirstNameV n{data.savedNames[index.row()]};
         if(data.namesState.count(n) == 0){
             return;
@@ -396,10 +389,18 @@ void AllFirstNamesMW::init_connections_lists(){
         update_displayed_current_name_infos();
     });
 
+    // removed names
+    connect(ui.pbRetireSelectionFromRemoved, &QPushButton::clicked, this, &AllFirstNamesMW::unremove_current_name);
+    connect(ui.pbRetireAllFromRemoved, &QPushButton::clicked, this, &AllFirstNamesMW::clear_all_removed_names);
     connect(removedNamesV, &QListView::entered, this, [&](const QModelIndex &index){
         if(!listRemovedMousePressed){
             return;
         }
+
+        if(index.row() >= static_cast<int>(data.removedNames.size())){
+            return;
+        }
+
         FirstNameV n{data.removedNames[index.row()]};
         if(data.namesState.count(n) == 0){
             return;
@@ -408,6 +409,10 @@ void AllFirstNamesMW::init_connections_lists(){
         update_displayed_current_name_infos();
     });
     connect(removedNamesV, &QListView::clicked, this, [&](const QModelIndex &index){
+
+        if(index.row() >= static_cast<int>(data.removedNames.size())){
+            return;
+        }
 
         FirstNameV n{data.removedNames[index.row()]};
         if(data.namesState.count(n) == 0){
@@ -525,13 +530,15 @@ void AllFirstNamesMW::init_connections_display(){
         });
         connect(backgroundGendersColorsD[g].get(), &QColorDialog::colorSelected, this, [&,g](const QColor &c){
             backC[g] = c;
-            update_filters_from_ui();
+            update_display_from_ui();
         });
     }
 }
 
 
 void AllFirstNamesMW::init_data(){
+
+    Bench::start("[init_data]");
 
     SplashScreen splash;
     splash.show();
@@ -544,34 +551,23 @@ void AllFirstNamesMW::init_data(){
         splash.set_progress(value);
     });
 
-    Bench::start("[init_data]");
 
-    if(!data.init()){
-        // ...
-        return;
-    }
-
-    Bench::stop();
-    Bench::display();
-    Bench::reset();
-
-
+    data.init();
     splash.set_progress(95);
 
     // read list files
-    //    update_saved_list();
-    //    update_removed_list();
-    //    update_displayed_info();
+    data.read_saved_names_file(Paths::savedNamesFilePath);
+    data.read_removed_names_file(Paths::removedNamesFilePath);
 
-    // load parameters
-    // ...
+    // read settings file
+    if(!QFile(Paths::settingsFilePath).exists()){
+        settings.save_settings_file(Paths::settingsFilePath);
+    }else{
+        settings.read_settings_file(Paths::settingsFilePath);
+    }
+    qDebug() << "lastName " << settings.lastName;
 
-    // update lists
-    update_ui_from_settings();
-
-    update_filters_from_ui(); // temp
-    update_display_from_ui();
-
+    Bench::stop();
     splash.set_progress(100);
 
     // wait a little bit
@@ -579,216 +575,129 @@ void AllFirstNamesMW::init_data(){
     while( QTime::currentTime() < t){
         QCoreApplication::processEvents( QEventLoop::AllEvents, 5);
     }
-
-
-
-
-
-
-//    ui.pbLoading->setValue(88);
-//    wait_process(10);
-//    //    Bench::stop();
-
-//    //    Bench::start("  [read saved/removed]", true);
-
-//    // saved
-//    QFile savedNamesFile(Paths::savedNamesFilePath);
-//    if(!savedNamesFile.exists()){
-//        if(!savedNamesFile.open(QFile::WriteOnly | QIODevice::Text)){
-//            qWarning()<< "Cannot write " << Paths::savedNamesFilePath << "\n";
-//            return;
-//        }
-//    }else{
-//        if(!savedNamesFile.open(QFile::ReadOnly | QIODevice::Text)){
-//            qWarning()<< "Cannot read " << Paths::savedNamesFilePath << "\n";
-//            return;
-//        }
-
-//        QTextStream inSaved(&savedNamesFile);
-//        for(const auto &savedName : inSaved.readAll().splitRef("\n")){
-
-//            //            FirstName name = StrToData::to_first_name(savedName);
-//            //            if(namesId.count(name.v) != 0){
-//            //                savedNames[{name}] = &namesInfos[namesId[name.v]];
-//            //            }
-//        }
-//    }
-
-//    // removed
-//    QFile removedNamesFile(Paths::removedNamesFilePath);
-//    if(!removedNamesFile.exists()){
-//        if(!removedNamesFile.open(QFile::WriteOnly | QIODevice::Text)){
-//            qWarning()<< "Cannot write " << Paths::removedNamesFilePath << "\n";
-//            return;
-//        }
-//    }else{
-//        if(!removedNamesFile.open(QFile::ReadOnly | QIODevice::Text)){
-//            qWarning()<< "Cannot read " << Paths::removedNamesFilePath << "\n";
-//            return;
-//        }
-
-//        QTextStream inRemoved(&removedNamesFile);
-//        for(const auto &removedName : inRemoved.readAll().splitRef("\n")){
-
-//            //            FirstName name = StrToData::to_first_name(removedName);
-//            //            if(namesId.count(name.v) != 0 && savedNames.count({name}) == 0){
-//            //                removedNames[{name}] = &namesInfos[namesId[name.v]];
-//            //            }
-//        }
-//    }
-
-//    ui.pbLoading->setValue(100);
-//    wait_process(10);
-//    //    Bench::stop();
-
-//    qDebug() << "end read names files";
-
-
-
-
 }
 
 void AllFirstNamesMW::update_ui_from_settings(){
 
+    update_saved_list();
+    update_removed_list();
+    update_filtered_list();
 
-    //    QFile settingsFile(path);
-    //    if(!settingsFile.open(QFile::ReadOnly | QIODevice::Text)){
-    //        qWarning() << "cannot open settings file at path " % path;
-    //        return false;
-    //    }
+    ui.leLastName->setText(settings.lastName);
 
-    //    QTextStream fileStream(&settingsFile);
-    //    QStringList content = fileStream.readAll().split("\n");
+    // filters
+    const auto &f = settings.filters;
+    // # gender
+    ui.cbFiltersGender->setChecked(f.filterGender);
+    ui.cbOnlyFemale->setChecked(f.onlyFemale);
+    ui.cbOnlyMale->setChecked(f.onlyMale);
+    ui.cbOnlyOther->setChecked(f.onlyOther);
+    ui.cbMajorFemale->setChecked(f.majorFemale);
+    ui.cbMajorMale->setChecked(f.majorMale);
+    ui.cbMajorOther->setChecked(f.majorOther);
+    ui.cbFemaleMale->setChecked(f.femaleMale);
+    // ui.cbFemaleOther->setChecked(f.femaleOther);
+    // ui.cbMaleOther->setChecked(f.maleOther);
+    // # letters
+    ui.cbFiltersLetters->setChecked(f.filterLetters);
+    ui.cbStartsBy->setChecked(f.startsBy);
+    ui.leStartsBy->setText(f.startsByTextes.join(Filters::sepWords));
+    ui.cbEndsBy->setChecked(f.endsBy);
+    ui.leEndsBy->setText(f.endsByTextes.join(Filters::sepWords));
+    ui.cbContains->setChecked(f.contains);
+    ui.leContains->setText(f.containsTextes.join(Filters::sepWords));
+    ui.cbDoNotContain->setChecked(f.doNoContains);
+    ui.leDoNotContain->setText(f.doNotContainsTextes.join(Filters::sepWords));
+    ui.cbNbLetters->setChecked(f.nbLetters);
+    ui.sbMinNbLetters->setValue(f.minLettersNb);
+    ui.sbMaxNbLetters->setValue(f.maxLettersNb);
 
-    //    int id = 0;
-    //    settings.lastName = content[id++];
-    //    ui.leLastName->setText(settings.lastName);
+    // # year
+    ui.cbFiltersYears->setChecked(f.filterYear);
+    // ## appears
+    if(f.appearsBefore){
+        ui.cbOpeAppearsYear->setCurrentIndex(0);
+    }else if(f.appearsDuring){
+        ui.cbOpeAppearsYear->setCurrentIndex(1);
+    }else if(f.appearsAfter){
+        ui.cbOpeAppearsYear->setCurrentIndex(2);
+    }else{
+        ui.cbOpeAppearsYear->setCurrentIndex(3);
+    }
+    ui.cbAppearsYear->setChecked(f.appearsBefore || f.appearsDuring || f.appearsAfter || f.appearsUnknow);
+    ui.sbAppearsYear->setValue(f.appearsYear);
+    // ## last appears
+    if(f.lastAppearsBefore){
+        ui.cbOpeLastAppearsYear->setCurrentIndex(0);
+    }else if(f.lastAppearsDuring){
+        ui.cbOpeLastAppearsYear->setCurrentIndex(1);
+    }else if(f.lastAppearsAfter){
+        ui.cbOpeLastAppearsYear->setCurrentIndex(2);
+    }else{
+        ui.cbOpeLastAppearsYear->setCurrentIndex(3);
+    }
+    ui.cbLastAppearsYear->setChecked(f.lastAppearsBefore || f.lastAppearsDuring || f.lastAppearsAfter || f.lastAppearsUnknow);
+    ui.sbLastAppearsYear->setValue(f.lastAppearsYear);
+    // ## peak
+    if(f.peakBefore){
+        ui.cbOpePeakYear->setCurrentIndex(0);
+    }else if(f.peakDuring){
+        ui.cbOpePeakYear->setCurrentIndex(1);
+    }else if(f.peakAfter){
+        ui.cbOpePeakYear->setCurrentIndex(2);
+    }else{
+        ui.cbOpePeakYear->setCurrentIndex(3);
+    }
+    ui.cbPeakYear->setChecked(f.peakBefore || f.peakDuring || f.peakAfter || f.peakUnknow);
+    ui.sbPeakYear->setValue(f.peakYear);
+    // # period
+//    ui.cbFiltersPopPeriod->setChecked(f.filterPopPeriod);
+////    qDebug() << "f period" << from_view(get_name(f.period));
+////    ui.cbPeriod->setCurrentIndex(static_cast<int>(f.period));
+//    if(f.periodAtLeast){
+//        ui.cbOpePer->setCurrentIndex(0);
+//    }else if(f.periodEqual){
+//        ui.cbOpePer->setCurrentIndex(1);
+//    }else {
+//        ui.cbOpePer->setCurrentIndex(2);
+//    }
+////    ui.cbPopPeriod->setCurrentIndex(static_cast<std::uint8_t>(f.popPeriod));
+//    // # department
+//    ui.cbFiltersPopDep->setChecked(f.filterPopDep);
+//    if(f.depAtLeast){
+//        ui.cbOpeDep->setCurrentIndex(0);
+//    }else if(f.depEqual){
+//        ui.cbOpeDep->setCurrentIndex(1);
+//    }else {
+//        ui.cbOpeDep->setCurrentIndex(2);
+//    }
+////    ui.cbPopDep->setCurrentIndex(static_cast<int>(f.popDep));
+//    QStringList depStr;
+//    for(const auto &d : f.insideDepartments){
+//        depStr << QString::number(static_cast<int>(d));
+//    }
+//    ui.leDep->setText(depStr.join(";"));
 
-    //    auto sex = content[id++].split(" ");
+//    // # sorting
+//    ui.rbSortAZ->setEnabled(settings.filters.sortAZ);
+//    ui.rbSortZA->setEnabled(settings.filters.sortZA);
+//    ui.rbSortPopS->setEnabled(settings.filters.sortPopS);
+//    ui.rbSortPopI->setEnabled(settings.filters.sortPopI);
 
-    //    if(sex.size() >= 6){
-    //        ui.cbFiltersSex->setChecked(sex[0] == "1");
-    //        ui.cbSexFemale->setChecked(sex[1] == "1");
-    //        ui.cbSexMale->setChecked(sex[2] == "1");
-    //        ui.cbSexBoth->setChecked(sex[3] == "1");
-    //        ui.cbSexOther->setChecked(sex[4] == "1");
-    //        ui.cbFilterMixedFrequency->setChecked(sex[5] == "1");
-    //    }
+    // uppdate ui sub groups
+    ui.wSubGender->setEnabled(ui.cbFiltersGender->isChecked());
+    ui.wSubLetters->setEnabled(ui.cbFiltersLetters->isChecked());
+    ui.wSubDep->setEnabled(ui.cbFiltersPopDep->isChecked());
+    ui.wSubYear->setEnabled(ui.cbFiltersYears->isChecked());
 
-    //    auto nbLetters      = content[id++].split(" ");
-    //    ui.cbFiltersNbLetters->setChecked(nbLetters[0] == "1");
-    //    ui.sbMinNbLetters->setValue(nbLetters[1].toInt());
-    //    ui.sbMaxNbLetters->setValue(nbLetters[2].toInt());
+    ui.cbOpeAppearsYear->setEnabled(ui.cbAppearsYear->isChecked());
+    ui.sbAppearsYear->setEnabled(ui.cbOpeAppearsYear->currentIndex() != 3 && ui.cbAppearsYear->isChecked());
 
-    //    auto startsBy       = content[id++].split(" ");
-    //    if(startsBy.size() >= 1){
-    //        ui.cbFiltersStartsBy->setChecked(startsBy[0] == "1");
-    //    }
-    //    if(startsBy.size() == 2){
-    //        ui.leStartsBy->setText(startsBy[1]);
-    //    }
+    ui.cbOpeLastAppearsYear->setEnabled(ui.cbLastAppearsYear->isChecked());
+    ui.sbLastAppearsYear->setEnabled(ui.cbOpeLastAppearsYear->currentIndex() != 3 && ui.cbLastAppearsYear->isChecked());
 
-    //    auto endsBy         = content[id++].split(" ");
-    //    if(endsBy.size() >= 1){
-    //        ui.cbFiltersEndsBy->setChecked(endsBy[0] == "1");
-    //    }
-    //    if(endsBy.size() == 2){
-    //        ui.leEndsBy->setText(endsBy[1]);
-    //    }
-
-    //    auto contains       = content[id++].split(" ");
-    //    if(contains.size() >= 1){
-    //        ui.cbFiltersContains->setChecked(contains[0] == "1");
-    //    }
-    //    if(contains.size() == 2){
-    //        ui.leContains->setText(contains[1]);
-    //    }
-
-    //    auto doNotContain   = content[id++].split(" ");
-    //    if(doNotContain.size() >= 1){
-    //        ui.cbFiltersDoNotContain->setChecked(doNotContain[0] == "1");
-    //    }
-    //    if(doNotContain.size() == 2){
-    //        ui.leDoNotContain->setText(doNotContain[1]);
-    //    }
-
-    //    auto periodUsage = content[id++].split(" ");
-    //    if(periodUsage.size() >= 27){
-
-    //        int idP = 0;
-    //        ui.cbFilters1900_2018->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1900_2020->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1900_2020->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters1900_1924->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1900_1924->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1900_1924->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters1925_1949->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1925_1949->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1925_1949->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters1950_1969->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1950_1969->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1950_1969->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters1970_1979->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1970_1979->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1970_1979->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters1980_1989->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1980_1989->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1980_1989->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters1990_1999->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe1990_1999->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop1990_1999->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters2000_2009->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe2000_2009->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop2000_2009->setCurrentIndex(periodUsage[idP++].toInt());
-
-    //        ui.cbFilters2010_2018->setChecked(periodUsage[idP++] == "1");
-    //        ui.cbOpe2010_2020->setCurrentIndex(periodUsage[idP++].toInt());
-    //        ui.cbPop2010_2020->setCurrentIndex(periodUsage[idP++].toInt());
-    //    }
-
-    //    auto departmentUsage = content[id++].split(" ");
-    //    if(departmentUsage.size() >= 2){
-    //        int idD = 0;
-    //        ui.cbFiltersDepartment->setChecked(departmentUsage[idD++] == "1");
-    //        if(departmentUsage.size() == 4){
-    //            ui.leInsideDepartments->setText(departmentUsage[idD++]);
-    //        }
-    //    }
-
-    //    settings.femaleCol1  = Convert::to_color(content[id++]);
-    //    settings.femaleCol2  = Convert::to_color(content[id++]);
-    //    settings.maleCol1    = Convert::to_color(content[id++]);
-    //    settings.maleCol2    = Convert::to_color(content[id++]);
-    //    settings.bothCol1    = Convert::to_color(content[id++]);
-    //    settings.bothCol2    = Convert::to_color(content[id++]);
-    //    settings.otherCol1   = Convert::to_color(content[id++]);
-    //    settings.otherCol2   = Convert::to_color(content[id++]);
-
-    //    femaleCol1D.setCurrentColor(settings.femaleCol1);
-    //    femaleCol2D.setCurrentColor(settings.femaleCol2);
-    //    maleCol1D.setCurrentColor( settings.maleCol1);
-    //    maleCol2D.setCurrentColor( settings.maleCol2);
-    //    bothCol1D.setCurrentColor( settings.bothCol1);
-    //    bothCol2D.setCurrentColor( settings.bothCol2);
-    //    otherCol1D.setCurrentColor(settings.otherCol1);
-    //    otherCol2D.setCurrentColor(settings.otherCol2);
-
-    //    UiUtility::fill_button_icon(ui.pbFemaleColor1, settings.femaleCol1);
-    //    UiUtility::fill_button_icon(ui.pbFemaleColor2, settings.femaleCol2);
-    //    UiUtility::fill_button_icon(ui.pbMaleColor1,   settings.maleCol1);
-    //    UiUtility::fill_button_icon(ui.pbMaleColor2,   settings.maleCol2);
-    //    UiUtility::fill_button_icon(ui.pbBothColor1,   settings.bothCol1);
-    //    UiUtility::fill_button_icon(ui.pbBothColor2,   settings.bothCol2);
-    //    UiUtility::fill_button_icon(ui.pbOtherColor1,  settings.otherCol1);
-    //    UiUtility::fill_button_icon(ui.pbOtherColor2,  settings.otherCol2);
-
+    ui.cbOpePeakYear->setEnabled(ui.cbPeakYear->isChecked());
+    ui.sbPeakYear->setEnabled(ui.cbOpePeakYear->currentIndex() != 3 && ui.cbPeakYear->isChecked());
 }
 
 bool AllFirstNamesMW::eventFilter(QObject *obj, QEvent *event){
@@ -816,15 +725,6 @@ bool AllFirstNamesMW::eventFilter(QObject *obj, QEvent *event){
         }
     }
 
-//    if (obj == ui->listView->viewport() && event->type() == QEvent::MouseButtonDblClick)
-//    {
-//        QMouseEvent *ev = static_cast<QMouseEvent *>(event);
-//        if (ev->buttons() & Qt::RightButton)
-//        {
-//            qDebug()<< "double clicked" << ev->pos();
-//            qDebug()<<  ui->listView->indexAt(ev->pos()).data();
-//        }
-//    }
     return QObject::eventFilter(obj, event);
 }
 
@@ -833,23 +733,54 @@ AllFirstNamesMW::~AllFirstNamesMW(){
     listWorkerT.quit();
     listWorkerT.wait();
 
-    // save session
+    // save session    
+    update_filters_from_ui();
+    update_display_from_ui();
     settings.save_settings_file(Paths::settingsFilePath);
-    save_saved_names_file(Paths::savedNamesFilePath);
-//    save_removed_names_file(Paths::removedNamesFilePath);
+    data.save_saved_names_file(Paths::savedNamesFilePath);
+    data.save_removed_names_file(Paths::removedNamesFilePath);
 }
 
 
 void AllFirstNamesMW::update_filtered_list(){
 
+    Bench::start("[update_filtered_list]");
     ui.twListNames->setTabText(0, QString("Filtrés (") % QString::number(data.countFiltered) % QSL(")"));
 
-    Bench::start("[update_filtered_list]");
-    filteredNamesM->update();
     filteredNamesV->viewport()->update();
-    Bench::stop();
+    filteredNamesV->verticalScrollBar()->setRange(0, data.countFiltered);
 
-    update_displayed_current_name_infos();
+    if(filteredNamesV->currentIndex().row() > static_cast<int>(data.countFiltered)){
+        filteredNamesV->scrollToTop();
+    }
+
+    Bench::stop();
+}
+
+void AllFirstNamesMW::update_saved_list(){
+
+    ui.twListNames->setTabText(1, QString("Retenus (") % QString::number(data.countSaved) % QSL(")"));
+
+    savedNamesM->update();
+    savedNamesV->viewport()->update();
+    savedNamesV->verticalScrollBar()->setRange(0, data.countSaved);
+
+    if(savedNamesV->currentIndex().row() > static_cast<int>(data.countSaved)){
+        savedNamesV->scrollToTop();
+    }
+}
+
+void AllFirstNamesMW::update_removed_list(){
+
+    ui.twListNames->setTabText(2, QString("Retirés (") % QString::number(data.countRemoved) % QSL(")"));
+
+    removedNamesM->update();
+    removedNamesV->viewport()->update();    
+    removedNamesV->verticalScrollBar()->setRange(0, data.countRemoved);
+
+    if(removedNamesV->currentIndex().row() > static_cast<int>(data.countRemoved)){
+        removedNamesV->scrollToTop();
+    }
 }
 
 
@@ -860,8 +791,18 @@ void AllFirstNamesMW::update_filters_from_ui(){
     ui.wSubLetters->setEnabled(ui.cbFiltersLetters->isChecked());
     ui.wSubDep->setEnabled(ui.cbFiltersPopDep->isChecked());
     ui.wSubYear->setEnabled(ui.cbFiltersYears->isChecked());
-    ui.sbAppearsYear->setEnabled(ui.cbOpeAppearsYear->currentIndex() != 3);
-    ui.sbPeakYear->setEnabled(ui.cbOpePeakYear->currentIndex() != 3);
+
+    ui.cbOpeAppearsYear->setEnabled(ui.cbAppearsYear->isChecked());
+    ui.sbAppearsYear->setEnabled(ui.cbOpeAppearsYear->currentIndex() != 3 && ui.cbAppearsYear->isChecked());
+
+    ui.cbOpeLastAppearsYear->setEnabled(ui.cbLastAppearsYear->isChecked());
+    ui.sbLastAppearsYear->setEnabled(ui.cbOpeLastAppearsYear->currentIndex() != 3 && ui.cbLastAppearsYear->isChecked());
+
+    ui.cbOpePeakYear->setEnabled(ui.cbPeakYear->isChecked());
+    ui.sbPeakYear->setEnabled(ui.cbOpePeakYear->currentIndex() != 3 && ui.cbPeakYear->isChecked());
+
+
+    settings.lastName                        = ui.leLastName->text();
 
     // filters
     // # gender
@@ -901,7 +842,7 @@ void AllFirstNamesMW::update_filters_from_ui(){
     settings.filters.lastAppearsDuring       = ui.cbOpeLastAppearsYear->currentIndex() == 1 && ui.cbLastAppearsYear->isChecked();
     settings.filters.lastAppearsAfter        = ui.cbOpeLastAppearsYear->currentIndex() == 2 && ui.cbLastAppearsYear->isChecked();
     settings.filters.lastAppearsUnknow       = ui.cbOpeLastAppearsYear->currentIndex() == 3 && ui.cbLastAppearsYear->isChecked();
-    settings.filters.lastAppearsYear         = ui.sbAppearsYear->value();
+    settings.filters.lastAppearsYear         = ui.sbLastAppearsYear->value();
     // ## peak
     settings.filters.peakBefore              = ui.cbOpePeakYear->currentIndex() == 0 && ui.cbPeakYear->isChecked();
     settings.filters.peakDuring              = ui.cbOpePeakYear->currentIndex() == 1 && ui.cbPeakYear->isChecked();
@@ -937,63 +878,12 @@ void AllFirstNamesMW::update_filters_from_ui(){
     settings.filters.sortPopS                = ui.rbSortPopS->isChecked();
     settings.filters.sortPopI                = ui.rbSortPopI->isChecked();
 
-
-
-
     emit apply_filter_signal(&data, settings.filters);
-
-
-    // settings.filters.insideDepartmentsTextes = ui.leInsideDepartments->text().split(Filters::sepWords);
-
-
-
-
-//    filteredNamesInfos_test.clear();
-//    filteredNamesInfos_test.reserve(namesInfos.size());
-
-//    filteredNamesStr.clear();
-//    filteredNamesStr.reserve(static_cast<int>(namesInfos.size()));
-
-//    for(auto &info : namesInfos){
-
-//        // check if name filtered
-//        if(is_name_filtered(info)){
-//            continue;
-//        }
-
-//        QString name = info.firstName.v;
-//        filteredNamesStr << name;
-
-//        if(savedNames.count({name}) == 0 && removedNames.count({name}) == 0){
-//            filteredNamesInfos_test.emplace_back(&info);
-//        }
-//    }
-
-//    // sort settings
-//    std::sort(std::execution::par_unseq, std::begin(filteredNamesStr), std::end(filteredNamesStr), [&](const QString &n1, const QString &n2) -> bool{
-//        return
-//            namesInfos[namesId[n1]].countPerPeriod[static_cast<size_t>(Period::p1900_2020)] >
-//            namesInfos[namesId[n2]].countPerPeriod[static_cast<size_t>(Period::p1900_2020)];
-//    });
-//    // A -> Z
-//    std::sort(std::execution::par_unseq, std::begin(filteredNamesStr_test), std::end(filteredNamesStr_test), [&](const QString &n1, const QString &n2) -> bool{
-//        return n1 > n2;
-//    });
-//    // Z -> A
-//    std::sort(std::execution::par_unseq, std::begin(filteredNamesStr_test), std::end(filteredNamesStr_test), [&](const QString &n1, const QString &n2) -> bool{
-//        return n1 < n2;
-//    });
-
-
-
-//    if(filteredNamesStr.size() > 0){
-//        currentInfo = &namesInfos[namesId[filteredNamesStr[0]]];
-//    }else{
-//        currentInfo = nullptr;
-    //    }
 }
 
 void AllFirstNamesMW::update_display_from_ui(){
+
+
 
     auto &foreC = settings.display.genderRepartitionsForegroundColors;
     auto &backC = settings.display.genderRepartitionsBackgroundColors;
@@ -1004,59 +894,11 @@ void AllFirstNamesMW::update_display_from_ui(){
     }
 
     update_filtered_list();
-    update_displayed_current_name_infos();
 }
-
-//void MainWindow::update_saved_list(){
-
-//    savedNamesStr.clear();
-//    savedNamesStr.reserve(static_cast<int>(savedNames.size()));
-
-//    for(const auto &info : savedNames){
-//        savedNamesStr << info.first.v;
-//    }
-
-//    ui.twListNames->setTabText(1, "Retenus (" % QString::number(savedNamesStr.size()) % QStringLiteral(")"));
-//    ui.lwSavedNames->clear();
-
-//    ui.lwSavedNames->addItems(savedNamesStr);
-//}
-
-//void MainWindow::update_removed_list(){
-
-//    removedNamesStr.clear();
-//    removedNamesStr.reserve(static_cast<int>(removedNames.size()));
-
-//    for(const auto &info : removedNames){
-//        removedNamesStr << info.first.v;
-//    }
-
-//    ui.twListNames->setTabText(2, "Retirés (" % QString::number(removedNamesStr.size()) % QStringLiteral(")"));
-
-//    ui.lwRemoved->clear();
-//    ui.lwRemoved->addItems(removedNamesStr);
-//}
-
-
-
-bool AllFirstNamesMW::save_saved_names_file(const QString &path) const{
-
-    QFile savedFile(path);
-    if(!savedFile.open(QFile::WriteOnly | QIODevice::Text)){
-        qWarning() << "Cannot open saved names file at path " % path;
-        return false;
-    }
-
-    QTextStream fileStream(&savedFile);
-    for(const auto &savedName : data.savedNames){
-        fileStream << savedName.v % "\n";
-    }
-
-    return true;
-}
-
 
 void AllFirstNamesMW::update_displayed_name(FirstNameV name){
+
+    Bench::start("[update_displayed_name]");
 
     const auto gr = data.pData.infosPerName[name].genderRepartition;
     const QColor backgroundCol = settings.display.genderRepartitionsBackgroundColors[gr];
@@ -1071,9 +913,16 @@ void AllFirstNamesMW::update_displayed_name(FirstNameV name){
     ui.laFirstName->setText(firstNameStartStyle % name.v % endStyle);
     ui.laLastName->setText(lastNameStartStyle % ui.leLastName->text().toUpper() % endStyle);
 
+    ui.pbKeepCurrentName->setEnabled(!data.namesState[name].saved && !data.namesState[name].removed);
+    ui.pbRemoveCurrentName->setEnabled(!data.namesState[name].removed && !data.namesState[name].saved);
+    ui.pbPrevious->setEnabled(data.previousNames.size() > 0);
+
+    Bench::stop();
 }
 
 void AllFirstNamesMW::update_displayed_map(FirstNameV name){
+
+    Bench::start("[update_displayed_map]");
 
     double max = 0.;
     std::unordered_map<Dep, double> factors;
@@ -1101,9 +950,12 @@ void AllFirstNamesMW::update_displayed_map(FirstNameV name){
     }
 
     mapW->fill_map(factors);
+    Bench::stop();
 }
 
 void AllFirstNamesMW::update_displayed_curve(FirstNameV name){
+
+    Bench::start("[update_displayed_curve]");
 
     const auto &nameInfo = data.pData.infosPerName[name];
 
@@ -1139,9 +991,13 @@ void AllFirstNamesMW::update_displayed_curve(FirstNameV name){
         curveW->set_y_range(0, 1.2*max);
         curveW->set_points(years, counts);
     }
+
+    Bench::stop();
 }
 
 void AllFirstNamesMW::update_displayed_others_infos(FirstNameV name){
+
+    Bench::start("[update_displayed_others_infos]");
 
     const auto &nameInfo = data.pData.infosPerName[name];
     if(nameInfo.intervalApparition.start.v != -1){
@@ -1191,6 +1047,52 @@ void AllFirstNamesMW::update_displayed_others_infos(FirstNameV name){
         lw[4]->setText(from_view(get_name(data.pData.infosPerDepartment[d].infosPerName[nameInfo.name].popularity)));
         ++ii;
     }
+
+    Bench::stop();
+}
+
+void AllFirstNamesMW::save_current_name(){
+
+    if(data.currentName.v.length() == 0){
+        return;
+    }
+
+    data.namesState[data.currentName].saved = true;
+    data.savedNames.push_back(data.currentName);
+    data.countSaved++;
+
+    update_saved_list();
+
+    next_filtered_name();
+}
+
+void AllFirstNamesMW::unsave_current_name(){
+
+    if(data.currentName.v.length() == 0){
+        return;
+    }
+    if(!data.namesState[data.currentName].saved){
+        return;
+    }
+
+    data.namesState[data.currentName].saved = false;
+    data.savedNames.erase(std::remove(data.savedNames.begin(), data.savedNames.end(), data.currentName), data.savedNames.end());
+    --data.countSaved;
+    update_saved_list();
+
+    next_saved_name();
+}
+
+void AllFirstNamesMW::clear_all_saved_names(){       
+
+    for(const auto name : data.savedNames){
+        data.namesState[name].saved = false;
+    }
+    data.savedNames.clear();
+    data.countSaved = 0;
+
+    update_saved_list();
+    update_displayed_current_name_infos();
 }
 
 void AllFirstNamesMW::update_displayed_current_name_infos(){
@@ -1199,7 +1101,10 @@ void AllFirstNamesMW::update_displayed_current_name_infos(){
         return;
     }
 
-    Bench::start("[update_displayed_info]");
+    Bench::start("update_displayed_current_name_infos");
+
+    ui.pbRetireSelectionFromSaved->setEnabled(data.namesState[data.currentName].saved && data.savedNames.size() > 0);
+    ui.pbRetireSelectionFromRemoved->setEnabled(data.namesState[data.currentName].removed && data.removedNames.size() > 0);
 
     update_displayed_name(data.currentName);
     update_displayed_others_infos(data.currentName);
@@ -1207,105 +1112,13 @@ void AllFirstNamesMW::update_displayed_current_name_infos(){
     update_displayed_map(data.currentName);
 
     Bench::stop();
+
     Bench::display();
     Bench::reset();
-
-
-//    }else{
-
-//        ui.laWomanTotal->setText("0");
-//        ui.laManTotal->setText("0");
-//        ui.laOtherTotal->setText("0");
-
-//        ui.laWomanUnknowYear->setText("0");
-//        ui.laManUnknowYear->setText("0");
-//        ui.laOtherUnknowYear->setText("0");
-
-//        ui.laFirstName->setText(QStringLiteral("<html><head/><body><p align=\"center\"><span style=\" font-size:36pt;\">...</span></p></body></html>"));
-//        ui.laLastName->setText(QStringLiteral("<html><head/><body><p align=\"center\"><span style=\" font-size:24pt;\">...</span></p></body></html>"));
-//        ui.lwCurrentNameTotalPerYear->clear();
-
-//        ui.pbNext->setEnabled(false);
-//        ui.pbKeepCurrentName->setEnabled(false);
-//        ui.pbRemoveCurrentName->setEnabled(false);
-//    }
-
-
 }
 
+void AllFirstNamesMW::next_filtered_name(){
 
-
-//void MainWindow::keep_current_name(){
-
-//    int currentRemovedId = ui.lwRemoved->currentRow();
-
-//    if(currentInfo != nullptr){
-//        previousInfo.emplace(currentInfo);
-//    }
-
-////    // if not already saved
-////    if(savedNames.count(currentInfo->firstName) == 0){
-
-////        // add current to saved
-////        savedNames[currentInfo->firstName] = currentInfo;
-
-////        // remove from removed
-////        if(removedNames.count(currentInfo->firstName) != 0){
-////            removedNames.erase(currentInfo->firstName);
-////            update_removed_list();
-////        }
-
-////        // remove from filtered
-////        if(auto pos = std::find(filteredNamesInfos_test.begin(),filteredNamesInfos_test.end(), currentInfo); pos != std::end(filteredNamesInfos_test)){
-////            filteredNamesInfos_test.erase(pos);
-////        }
-
-////        // update lists
-////        update_saved_list();
-////    }
-
-//    int index  = ui.twListNames->currentIndex();
-//    if(index == 0){ // filtered
-
-////        // choose new random name among filtered ones
-////        if(filteredNamesInfos_test.size() > 0){
-
-////            std::uniform_int_distribution<> distrib(0, static_cast<int>(filteredNamesInfos_test.size())-1);
-////            auto id = distrib(*gen);
-
-////            for(int ii = 0; ii < ui.lwFilteredNames->count(); ++ii){
-////                if(ui.lwFilteredNames->item(ii)->text() == filteredNamesInfos_test[static_cast<size_t>(id)]->firstName.v){
-////                    ui.lwFilteredNames->setCurrentRow(ii);
-////                }
-////            }
-////        }else{
-////            currentInfo = nullptr;
-////        }
-
-//    }else if(index == 2){ // removed
-
-//        if(removedNames.size() > 0){
-//            if(currentRemovedId < static_cast<int>(removedNames.size()) && currentRemovedId >= 0){
-//                ui.lwRemoved->setCurrentRow(currentRemovedId);
-//            }else if(currentRemovedId >= static_cast<int>(removedNames.size()) && currentRemovedId >= 0){
-//                ui.lwRemoved->setCurrentRow(currentRemovedId-1);
-//            }
-//        }else{
-//            currentInfo = nullptr;
-//        }
-//    }
-
-
-
-//    // update current displayed
-//    update_displayed_info();
-//}
-
-void AllFirstNamesMW::next_name(){
-
-//    if(currentInfo != nullptr){
-//        previousInfo.emplace(currentInfo);
-//    }
 
     if(data.filteredNames.size() < 1){
         return;
@@ -1319,10 +1132,13 @@ void AllFirstNamesMW::next_name(){
     std::vector<size_t> ids;
     size_t id = 0;
     for(const auto &name : data.filteredNames){
-        if(!data.namesState[name].removed && data.namesState[name].filtered){
+        if(!data.namesState[name].removed && !data.namesState[name].saved && data.namesState[name].filtered){
             ids.push_back(id);
         }
         id++;
+    }
+    if(ids.size() == 0){
+        return;
     }
 
     std::uniform_int_distribution<> distrib(0, static_cast<int>(ids.size())-1);
@@ -1330,6 +1146,87 @@ void AllFirstNamesMW::next_name(){
 
     FirstNameV n{data.filteredNames[ids[genId]]};
     data.currentName = n;
+    update_displayed_current_name_infos();
+}
+
+void AllFirstNamesMW::next_saved_name(){
+
+    if(data.savedNames.size() < 1){
+        return;
+    }
+
+    if(data.currentName.v.length() != 0){
+        data.previousNames.push(data.currentName);
+    }
+
+    std::uniform_int_distribution<> distrib(0, static_cast<int>(data.savedNames.size())-1);
+    auto genId = distrib(*gen);
+
+    FirstNameV n{data.savedNames[genId]};
+    data.currentName = n;
+    update_displayed_current_name_infos();
+}
+
+void AllFirstNamesMW::remove_current_name(){
+
+    if(data.currentName.v.length() == 0){
+        return;
+    }
+
+    data.namesState[data.currentName].removed = true;
+    data.removedNames.push_back(data.currentName);
+    data.countRemoved++;
+
+    update_removed_list();
+
+    next_filtered_name();
+}
+
+void AllFirstNamesMW::unremove_current_name(){
+
+    if(data.currentName.v.length() == 0){
+        return;
+    }
+    if(!data.namesState[data.currentName].removed){
+        return;
+    }
+
+    data.namesState[data.currentName].removed = false;
+    data.removedNames.erase(std::remove(data.removedNames.begin(), data.removedNames.end(), data.currentName), data.removedNames.end());
+    --data.countRemoved;
+
+    update_removed_list();
+
+    next_removed_name();
+}
+
+void AllFirstNamesMW::next_removed_name(){
+
+    if(data.removedNames.size() < 1){
+        return;
+    }
+
+    if(data.currentName.v.length() != 0){
+        data.previousNames.push(data.currentName);
+    }
+
+    std::uniform_int_distribution<> distrib(0, static_cast<int>(data.removedNames.size())-1);
+    auto genId = distrib(*gen);
+
+    FirstNameV n{data.removedNames[genId]};
+    data.currentName = n;
+    update_displayed_current_name_infos();
+}
+
+void AllFirstNamesMW::clear_all_removed_names(){
+
+    for(const auto name : data.removedNames){
+        data.namesState[name].removed = false;
+    }
+    data.removedNames.clear();
+    data.countRemoved = 0;
+
+    update_removed_list();
     update_displayed_current_name_infos();
 }
 
@@ -1344,331 +1241,6 @@ void AllFirstNamesMW::previous_name(){
     update_displayed_current_name_infos();
 }
 
-//void MainWindow::previous_name(){
-
-//    if(previousInfo.size() > 0){
-//        currentInfo = previousInfo.top();
-//        previousInfo.pop();
-//    }
-
-//    ui.twListNames->setCurrentIndex(0);
-
-//    // update current displayed
-//    update_displayed_info();
-//}
-
-//void MainWindow::remove_current_name(){
-
-//    int currentSavedId = ui.lwSavedNames->currentRow();
-
-//    if(currentInfo != nullptr){
-//        previousInfo.emplace(currentInfo);
-//    }
-
-//    // if not already removed
-//    if(removedNames.count(currentInfo->firstName) == 0){
-
-//        // add current to remove
-//        removedNames[currentInfo->firstName] = currentInfo;
-
-
-//        // remove from saved
-//        if(savedNames.count(currentInfo->firstName) != 0){
-//            savedNames.erase(currentInfo->firstName);
-//            update_saved_list();
-//        }
-
-////        // remove from filtered
-////        if(auto pos = std::find(filteredNamesInfos_test.begin(),filteredNamesInfos_test.end(), currentInfo); pos != std::end(filteredNamesInfos_test)){
-////            filteredNamesInfos_test.erase(pos);
-////        }
-
-//        // update lists
-//        update_removed_list();
-//    }
-
-
-//    int index  = ui.twListNames->currentIndex();
-//    if(index == 0){ // filtered
-
-////        // choose new random name among filtered ones
-////        if(filteredNamesInfos_test.size() > 0){
-
-////            std::uniform_int_distribution<> distrib(0, static_cast<int>(filteredNamesInfos_test.size())-1);
-////            auto id = distrib(*gen);
-
-////            for(int ii = 0; ii < ui.lwFilteredNames->count(); ++ii){
-////                if(ui.lwFilteredNames->item(ii)->text() == filteredNamesInfos_test[static_cast<size_t>(id)]->firstName.v){
-////                    ui.lwFilteredNames->setCurrentRow(ii);
-////                }
-////            }
-////        }else{
-////            currentInfo = nullptr;
-////        }
-
-//    }else if(index == 1){ // saved
-
-//        if(savedNames.size() > 0){
-//            if(currentSavedId < static_cast<int>(savedNames.size()) && currentSavedId >= 0){
-//                ui.lwSavedNames->setCurrentRow(currentSavedId);
-//            }else if(currentSavedId >= static_cast<int>(savedNames.size()) && currentSavedId >= 0){
-//                ui.lwSavedNames->setCurrentRow(currentSavedId-1);
-//            }
-//        }else{
-//            currentInfo = nullptr;
-//        }
-//    }
-
-//    // update current displayed
-//    update_displayed_info();
-//}
-
-//void MainWindow::retire_selection_from_saved(){
-
-//    if(currentInfo == nullptr){
-//        return;
-//    }
-//    if(savedNames.count(currentInfo->firstName) == 0){
-//        return;
-//    }
-
-//    savedNames.erase(currentInfo->firstName);
-//    removedNames[currentInfo->firstName] = currentInfo;
-
-//    int currentPosition = ui.lwSavedNames->currentRow();
-//    update_saved_list();
-//    if(currentPosition < ui.lwSavedNames->count()){
-//        ui.lwSavedNames->setCurrentRow(currentPosition);
-//    }else if(currentPosition > 0){
-//        ui.lwSavedNames->setCurrentRow(currentPosition-1);
-//    }
-
-//    update_removed_list();
-//}
-
-//void MainWindow::retire_all_from_saved(){
-
-//    for(auto &savedName : savedNames){
-//        removedNames[savedName.first] = savedName.second;
-//    }
-//    savedNames.clear();
-
-//    update_saved_list();
-//    update_removed_list();
-
-//}
-
-
-//bool apply_popularity_operator(Popularity pop, Popularity uiPop, int uiOp){
-//    if(uiOp == 0){ // at least
-//        if(pop < uiPop){
-//            return true;
-//        }
-//    }else if(uiOp == 1){
-//        if(pop >= uiPop){
-//            return true;
-//        }
-//    }else{
-//        if(pop != uiPop){
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-
-
-//bool MainWindow::is_name_filtered(const NameInfo &info){
-
-
-//    if(ui.cbFiltersContains->isChecked()){
-
-//        if(containsTextes.size() > 0){
-
-//            bool contains = true;
-//            for(const auto &text : containsTextes){
-//                if(!info.firstName.v.contains(text, Qt::CaseSensitivity::CaseInsensitive)){
-//                    contains = false;
-//                    break;
-//                }
-//            }
-
-//            if(!contains){
-//                return true;
-//            }
-//        }
-//    }
-
-//    if(ui.cbFiltersDoNotContain->isChecked()){
-
-//        if(doNotContainsTextes.size() > 0){
-
-//            bool contains = false;
-//            for(const auto &text : doNotContainsTextes){
-//                if(info.firstName.v.contains(text, Qt::CaseSensitivity::CaseInsensitive)){
-//                    contains = true;
-//                    break;
-//                }
-//            }
-
-//            if(contains){
-//                return true;
-//            }
-//        }
-//    }
-
-//    if(ui.cbFiltersStartsBy->isChecked()){
-
-//        bool starts = false;
-//        for(const auto &text : startsByTextes){
-//            if(info.firstName.v.startsWith(text, Qt::CaseSensitivity::CaseInsensitive)){
-//                starts = true;
-//                break;
-//            }
-//        }
-
-//        if(!starts){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFiltersEndsBy->isChecked()){
-
-//        bool ends = false;
-//        for(const auto &text : endsByTextes){
-//            if(info.firstName.v.endsWith(text, Qt::CaseSensitivity::CaseInsensitive)){
-//                ends = true;
-//                break;
-//            }
-//        }
-
-//        if(!ends){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFiltersNbLetters->isChecked()){
-//        if(info.firstName.v.length() > ui.sbMaxNbLetters->value()){
-//            return true;
-//        }
-//        if(info.firstName.v.length() < ui.sbMinNbLetters->value()){
-//            return true;
-//        }
-//    }
-
-
-//    if(ui.cbFilters1900_2018->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1900_2020)],
-//            static_cast<Popularity>(ui.cbPop1900_2020->currentIndex()),
-//            ui.cbOpe1900_2020->currentIndex())){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFilters1900_1924->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1900_1924)],
-//            static_cast<Popularity>(ui.cbPop1900_1924->currentIndex()),
-//            ui.cbOpe1900_1924->currentIndex())){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFilters1925_1949->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1925_1949)],
-//            static_cast<Popularity>(ui.cbPop1925_1949->currentIndex()),
-//            ui.cbOpe1925_1949->currentIndex())){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFilters1950_1969->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1950_1969)],
-//            static_cast<Popularity>(ui.cbPop1950_1969->currentIndex()),
-//            ui.cbOpe1950_1969->currentIndex())){
-//            return true;
-//        }
-//    }
-
-
-//    if(ui.cbFilters1970_1979->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1970_1979)],
-//            static_cast<Popularity>(ui.cbPop1970_1979->currentIndex()),
-//            ui.cbOpe1970_1979->currentIndex())){
-//            return true;
-//        }
-//    }
-
-
-//    if(ui.cbFilters1980_1989->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1980_1989)],
-//            static_cast<Popularity>(ui.cbPop1980_1989->currentIndex()),
-//            ui.cbOpe1980_1989->currentIndex())){
-//            return true;
-//        }
-//    }
-
-
-//    if(ui.cbFilters1990_1999->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p1990_1999)],
-//            static_cast<Popularity>(ui.cbPop1990_1999->currentIndex()),
-//            ui.cbOpe1990_1999->currentIndex())){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFilters2000_2009->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p2000_2009)],
-//            static_cast<Popularity>(ui.cbPop2000_2009->currentIndex()),
-//            ui.cbOpe2000_2009->currentIndex())){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFilters2010_2018->isChecked()){
-//        if(apply_popularity_operator(
-//            info.popularityPerPeriod[static_cast<size_t>(Period::p2010_2020)],
-//            static_cast<Popularity>(ui.cbPop2010_2020->currentIndex()),
-//            ui.cbOpe2010_2020->currentIndex())){
-//            return true;
-//        }
-//    }
-
-//    if(ui.cbFiltersDepartment->isChecked()){
-//        for(const auto &dep : insideDepartments){
-//            auto id  = get_id(dep);
-////            if(std::get<2>(info.departmentsInfo[id]).v > 5 ){
-////                return true;
-////            }
-//        }
-//    }
-
-//    return false;
-//}
-
-
-
-//bool MainWindow::save_removed_names_file(const QString &path) const{
-
-//    QFile removedFile(path);
-//    if(!removedFile.open(QFile::WriteOnly | QIODevice::Text)){
-//        qWarning() << "Cannot save removed names file at path " % path;
-//        return false;
-//    }
-
-//    QTextStream fileStream(&removedFile);
-//    for(const auto &removedName : removedNames){
-//        fileStream << removedName.first.v % "\n";
-//    }
-
-//    return true;
-//}
 
 void SplashScreen::set_progress(int value){
     m_progress = value;

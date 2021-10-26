@@ -13,62 +13,96 @@ using namespace tool;
 
 bool Settings::save_settings_file(const QString &path){
 
-
-    QFile settingsFile(path);
-    if(!settingsFile.open(QFile::WriteOnly | QIODevice::Text)){
-        qWarning() << "Cannot create settings file at path " % path;
+    QFile file(path);
+    if(!file.open(QFile::WriteOnly | QIODevice::Text)){
+        qWarning() << "Cannot open settings names file at path " % path;
         return false;
     }
 
-    QTextStream fileStream(&settingsFile);
+    QTextStream fs(&file);
 
-    // lastname
-    fileStream << lastName << "\n";
+    fs << lastName << "\n";
 
-    //        // sex
-    //        QString sex =
-    //            QString(ui.cbSexFemale->isChecked() ? "1 " : "0 ") %
-    //            (ui.cbSexMale->isChecked() ? "1 " : "0 ") %
-    //            (ui.cbSexBoth->isChecked() ? "1 " : "0 ") %
-    //            (ui.cbSexOther->isChecked() ? "1 " : "0 ");
+    // display
+    const auto &d = display;
+    using GR = GenderRepartition;
+    for(auto gr : {GR::OnlyFemale, GR::OnlyMale, GR::MostlyMale, GR::MostlyFemale, GR::FemaleMale, GR::Unknow}){
+        fs << Convert::to_str(d.genderRepartitionsForegroundColors.at(gr)) << "\n";
+        fs << Convert::to_str(d.genderRepartitionsBackgroundColors.at(gr)) << "\n";
+    }
 
-    //        fileStream << (ui.cbFiltersSex->isChecked() ? "1 " : "0 ") % sex % (ui.cbFilterMixedFrequency->isChecked() ? "1" : "0") % "\n";
+    // filters
+    const auto &f = filters;
+    // # letters
+    fs << (f.filterLetters ? "1" : "0")<< "\n";
+    fs << (f.nbLetters ? "1" : "0")<< "\n";
+    fs << f.minLettersNb<< "\n";
+    fs << f.maxLettersNb<< "\n";
+    fs << (f.contains ? "1" : "0")<< "\n";
+    fs << f.containsTextes.join(";")<< "\n";
+    fs << (f.startsBy ? "1" : "0")<< "\n";
+    fs << f.startsByTextes.join(";")<< "\n";
+    fs << (f.endsBy ? "1" : "0")<< "\n";
+    fs << f.endsByTextes.join(";")<< "\n";
+    fs << (f.doNoContains ? "1" : "0")<< "\n";
+    fs << f.doNotContainsTextes.join(";")<< "\n";
 
-    //        // nb letters
-    //        fileStream << (ui.cbFiltersNbLetters->isChecked() ? "1 " : "0 ") % QString::number(ui.sbMinNbLetters->value()) % " " % QString::number(ui.sbMaxNbLetters->value()) % "\n";
-    //        // starts by
-    //        fileStream << (ui.cbFiltersStartsBy->isChecked() ? "1 " : "0 ") % ui.leStartsBy->text().remove(" ") % "\n";
-    //        // ends by
-    //        fileStream << (ui.cbFiltersEndsBy->isChecked() ? "1 " : "0 ") % ui.leEndsBy->text().remove(" ") % "\n";
-    //        // contains
-    //        fileStream << (ui.cbFiltersContains->isChecked() ? "1 " : "0 ") % ui.leContains->text().remove(" ") % "\n";
-    //        // do not contains
-    //        fileStream << (ui.cbFiltersDoNotContain->isChecked() ? "1 " : "0 ") % ui.leDoNotContain->text().remove(" ") % "\n";
-    //        // periods
-    //        fileStream <<
-    //            (ui.cbFilters1900_2018->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1900_2020->currentIndex()) % " " % QString::number(ui.cbPop1900_2020->currentIndex()) % " " %
-    //                (ui.cbFilters1900_1924->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1900_1924->currentIndex()) % " " % QString::number(ui.cbPop1900_1924->currentIndex()) % " " %
-    //                (ui.cbFilters1925_1949->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1925_1949->currentIndex()) % " " % QString::number(ui.cbPop1925_1949->currentIndex()) % " " %
-    //                (ui.cbFilters1950_1969->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1950_1969->currentIndex()) % " " % QString::number(ui.cbPop1950_1969->currentIndex()) % " " %
-    //                (ui.cbFilters1970_1979->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1970_1979->currentIndex()) % " " % QString::number(ui.cbPop1970_1979->currentIndex()) % " " %
-    //                (ui.cbFilters1980_1989->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1980_1989->currentIndex()) % " " % QString::number(ui.cbPop1980_1989->currentIndex()) % " " %
-    //                (ui.cbFilters1990_1999->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe1990_1999->currentIndex()) % " " % QString::number(ui.cbPop1990_1999->currentIndex()) % " " %
-    //                (ui.cbFilters2000_2009->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe2000_2009->currentIndex()) % " " % QString::number(ui.cbPop2000_2009->currentIndex()) % " " %
-    //                (ui.cbFilters2010_2018->isChecked() ? "1 " : "0 ") % QString::number(ui.cbOpe2010_2020->currentIndex()) % " " % QString::number(ui.cbPop2010_2020->currentIndex()) % "\n";
-    //        // departments
-    //        fileStream <<
-    //            (ui.cbFiltersDepartment->isChecked() ? "1 " : "0 ") %
-    //                ui.leInsideDepartments->text().remove(" ") % "\n";
+    // # gender
+    fs << (f.filterGender ? "1" : "0")<< "\n";
+    fs << (f.onlyFemale ? "1" : "0")<< "\n";
+    fs << (f.onlyMale ? "1" : "0")<< "\n";
+    fs << (f.onlyOther ? "1" : "0")<< "\n";
+    fs << (f.majorFemale ? "1" : "0")<< "\n";
+    fs << (f.majorMale ? "1" : "0")<< "\n";
+    fs << (f.majorOther ? "1" : "0")<< "\n";
+    fs << (f.femaleMale ? "1" : "0")<< "\n";
+    fs << (f.femaleOther ? "1" : "0")<< "\n";
+    fs << (f.maleOther ? "1" : "0")<< "\n";
 
-    //        // colors
-    //        fileStream << Convert::to_str(settings.femaleCol1) % "\n";
-    //        fileStream << Convert::to_str(settings.femaleCol2) % "\n";
-    //        fileStream << Convert::to_str(settings.maleCol1) % "\n";
-    //        fileStream << Convert::to_str(settings.maleCol2) % "\n";
-    //        fileStream << Convert::to_str(settings.bothCol1) % "\n";
-    //        fileStream << Convert::to_str(settings.bothCol2) % "\n";
-    //        fileStream << Convert::to_str(settings.otherCol1) % "\n";
-    //        fileStream << Convert::to_str(settings.otherCol2) % "\n";
+    // year
+    fs << (f.filterYear ? "1" : "0")<< "\n";
+    fs << (f.appearsBefore ? "1" : "0")<< "\n";
+    fs << (f.appearsAfter ? "1" : "0")<< "\n";
+    fs << (f.appearsDuring ? "1" : "0")<< "\n";
+    fs << (f.appearsUnknow ? "1" : "0")<< "\n";
+    fs << f.appearsYear << "\n";
+    fs << (f.lastAppearsBefore ? "1" : "0") << "\n";
+    fs << (f.lastAppearsAfter ? "1" : "0") << "\n";
+    fs << (f.lastAppearsDuring ? "1" : "0") << "\n";
+    fs << (f.lastAppearsUnknow ? "1" : "0") << "\n";
+    fs << f.lastAppearsYear << "\n";
+    fs << (f.peakBefore ? "1" : "0") << "\n";
+    fs << (f.peakAfter ? "1" : "0") << "\n";
+    fs << (f.peakDuring ? "1" : "0") << "\n";
+    fs << (f.peakUnknow ? "1" : "0") << "\n";
+    fs << f.peakYear << "\n";
+
+//    // period
+//    fs << (f.filterPopPeriod ? "1" : "0") << "\n";
+//    fs << QString::number(static_cast<int>(f.period));
+//    fs << (f.periodAtLeast ? "1" : "0") << "\n";
+//    fs << (f.periodEqual ? "1" : "0") << "\n";
+//    fs << (f.periodAtLast ? "1" : "0") << "\n";
+//    fs << QString::number(static_cast<int>(f.popPeriod));
+
+//    // departments
+//    fs << (f.filterPopDep ? "1" : "0") << "\n";
+//    QStringList deps;
+//    for(const auto &d : f.insideDepartments){
+//        deps  << QString::number(static_cast<std::uint8_t>(d));
+//    }
+//    fs << deps.join(";");
+//    fs << (f.depAtLeast ? "1" : "0") << "\n";
+//    fs << (f.depEqual ? "1" : "0") << "\n";
+//    fs << (f.depAtLast ? "1" : "0") << "\n";
+//    fs << static_cast<std::uint8_t>(f.popDep);
+
+//    // sorting
+//    fs << (f.sortAZ ? "1" : "0") << "\n";
+//    fs << (f.sortZA ? "1" : "0") << "\n";
+//    fs << (f.sortPopS ? "1" : "0") << "\n";
+//    fs << (f.sortPopI ? "1" : "0") << "\n";
+
 
     return true;
 }
@@ -77,143 +111,99 @@ bool Settings::save_settings_file(const QString &path){
 
 bool Settings::read_settings_file(const QString &path){
 
-//    QFile settingsFile(path);
-//    if(!settingsFile.open(QFile::ReadOnly | QIODevice::Text)){
-//        qWarning() << "cannot open settings file at path " % path;
-//        return false;
+    QFile settingsFile(path);
+    if(!settingsFile.open(QFile::ReadOnly | QIODevice::Text)){
+        qWarning() << "Cannot open settings file at path " % path;
+        return false;
+    }
+
+    QTextStream fs(&settingsFile);
+    QStringList content = fs.readAll().split("\n");
+
+    int id = 0;
+
+    // display
+    lastName = content[id++];
+    auto &d = display;
+    using GR = GenderRepartition;
+    for(auto gr : {GR::OnlyFemale, GR::OnlyMale, GR::MostlyMale, GR::MostlyFemale, GR::FemaleMale, GR::Unknow}){
+        d.genderRepartitionsForegroundColors[gr] = Convert::to_color(content[id++]);
+        d.genderRepartitionsBackgroundColors[gr] = Convert::to_color(content[id++]);
+    }
+
+
+
+    // filters
+    auto &f = filters;
+    // # letters
+    f.filterLetters = content[id++] == "1";
+    f.nbLetters = content[id++] == "1";
+    f.minLettersNb = content[id++].toInt();
+    f.maxLettersNb = content[id++].toInt();
+    f.contains = content[id++] == "1";
+    f.containsTextes = content[id++].split(";");
+    f.startsBy = content[id++] == "1";
+    f.startsByTextes = content[id++].split(";");
+    f.endsBy = content[id++] == "1";
+    f.endsByTextes = content[id++].split(";");
+    f.doNoContains = content[id++] == "1";
+    f.doNotContainsTextes = content[id++].split(";");
+
+    // # gender
+    f.filterGender = content[id++] == "1";
+    f.onlyFemale = content[id++] == "1";
+    f.onlyMale = content[id++] == "1";
+    f.onlyOther = content[id++] == "1";
+    f.majorFemale = content[id++] == "1";
+    f.majorMale = content[id++] == "1";
+    f.majorOther = content[id++] == "1";
+    f.femaleMale = content[id++] == "1";
+    f.femaleOther = content[id++] == "1";
+    f.maleOther = content[id++] == "1";
+
+    // year
+    f.filterYear = content[id++] == "1";
+    f.appearsBefore = content[id++] == "1";
+    f.appearsAfter = content[id++] == "1";
+    f.appearsDuring = content[id++] == "1";
+    f.appearsUnknow = content[id++] == "1";
+    f.appearsYear = content[id++].toInt();
+    f.lastAppearsBefore = content[id++] == "1";
+    f.lastAppearsAfter = content[id++] == "1";
+    f.lastAppearsDuring = content[id++] == "1";
+    f.lastAppearsUnknow = content[id++] == "1";
+    f.lastAppearsYear = content[id++].toInt();
+    f.peakBefore = content[id++] == "1";
+    f.peakAfter = content[id++] == "1";
+    f.peakDuring = content[id++] == "1";
+    f.peakUnknow = content[id++] == "1";
+    f.peakYear = content[id++].toInt();
+
+//    // period
+//    f.filterPopPeriod = content[id++] == "1";
+//    f.period = static_cast<Period>(static_cast<std::uint8_t>(content[id++].toInt()));
+//    f.periodAtLeast = content[id++] == "1";
+//    f.periodEqual = content[id++] == "1";
+//    f.periodAtLast = content[id++] == "1";
+//    f.popPeriod = static_cast<Popularity>(static_cast<std::uint8_t>(content[id++].toInt()));
+
+//    // departments
+//    f.filterPopDep = content[id++] == "1";
+//    f.insideDepartments.clear();
+//    for(const auto &dStr : content[id++].split(";")){
+//        f.insideDepartments.insert(static_cast<Dep>(static_cast<std::uint8_t>(dStr.toInt())));
 //    }
+//    f.depAtLeast = content[id++] == "1";
+//    f.depEqual = content[id++] == "1";
+//    f.depAtLast = content[id++] == "1";
+//    f.popDep = static_cast<Popularity>(static_cast<std::uint8_t>(content[id++].toInt()));
 
-//    QTextStream fileStream(&settingsFile);
-//    QStringList content = fileStream.readAll().split("\n");
+//    // sorting
+//    f.sortAZ = content[id++] == "1";
+//    f.sortZA = content[id++] == "1";
+//    f.sortPopS = content[id++] == "1";
+//    f.sortPopI = content[id++] == "1";
 
-//    int id = 0;
-//    settings.lastName = content[id++];
-//    ui.leLastName->setText(settings.lastName);
-
-//    auto sex = content[id++].split(" ");
-
-//    if(sex.size() >= 6){
-//        ui.cbFiltersSex->setChecked(sex[0] == "1");
-//        ui.cbSexFemale->setChecked(sex[1] == "1");
-//        ui.cbSexMale->setChecked(sex[2] == "1");
-//        ui.cbSexBoth->setChecked(sex[3] == "1");
-//        ui.cbSexOther->setChecked(sex[4] == "1");
-//        ui.cbFilterMixedFrequency->setChecked(sex[5] == "1");
-//    }
-
-//    auto nbLetters      = content[id++].split(" ");
-//    ui.cbFiltersNbLetters->setChecked(nbLetters[0] == "1");
-//    ui.sbMinNbLetters->setValue(nbLetters[1].toInt());
-//    ui.sbMaxNbLetters->setValue(nbLetters[2].toInt());
-
-//    auto startsBy       = content[id++].split(" ");
-//    if(startsBy.size() >= 1){
-//        ui.cbFiltersStartsBy->setChecked(startsBy[0] == "1");
-//    }
-//    if(startsBy.size() == 2){
-//        ui.leStartsBy->setText(startsBy[1]);
-//    }
-
-//    auto endsBy         = content[id++].split(" ");
-//    if(endsBy.size() >= 1){
-//        ui.cbFiltersEndsBy->setChecked(endsBy[0] == "1");
-//    }
-//    if(endsBy.size() == 2){
-//        ui.leEndsBy->setText(endsBy[1]);
-//    }
-
-//    auto contains       = content[id++].split(" ");
-//    if(contains.size() >= 1){
-//        ui.cbFiltersContains->setChecked(contains[0] == "1");
-//    }
-//    if(contains.size() == 2){
-//        ui.leContains->setText(contains[1]);
-//    }
-
-//    auto doNotContain   = content[id++].split(" ");
-//    if(doNotContain.size() >= 1){
-//        ui.cbFiltersDoNotContain->setChecked(doNotContain[0] == "1");
-//    }
-//    if(doNotContain.size() == 2){
-//        ui.leDoNotContain->setText(doNotContain[1]);
-//    }
-
-//    auto periodUsage = content[id++].split(" ");
-//    if(periodUsage.size() >= 27){
-
-//        int idP = 0;
-//        ui.cbFilters1900_2018->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1900_2020->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1900_2020->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters1900_1924->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1900_1924->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1900_1924->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters1925_1949->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1925_1949->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1925_1949->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters1950_1969->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1950_1969->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1950_1969->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters1970_1979->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1970_1979->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1970_1979->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters1980_1989->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1980_1989->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1980_1989->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters1990_1999->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe1990_1999->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop1990_1999->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters2000_2009->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe2000_2009->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop2000_2009->setCurrentIndex(periodUsage[idP++].toInt());
-
-//        ui.cbFilters2010_2018->setChecked(periodUsage[idP++] == "1");
-//        ui.cbOpe2010_2020->setCurrentIndex(periodUsage[idP++].toInt());
-//        ui.cbPop2010_2020->setCurrentIndex(periodUsage[idP++].toInt());
-//    }
-
-//    auto departmentUsage = content[id++].split(" ");
-//    if(departmentUsage.size() >= 2){
-//        int idD = 0;
-//        ui.cbFiltersDepartment->setChecked(departmentUsage[idD++] == "1");
-//        if(departmentUsage.size() == 4){
-//            ui.leInsideDepartments->setText(departmentUsage[idD++]);
-//        }
-//    }
-
-//    settings.femaleCol1  = Convert::to_color(content[id++]);
-//    settings.femaleCol2  = Convert::to_color(content[id++]);
-//    settings.maleCol1    = Convert::to_color(content[id++]);
-//    settings.maleCol2    = Convert::to_color(content[id++]);
-//    settings.bothCol1    = Convert::to_color(content[id++]);
-//    settings.bothCol2    = Convert::to_color(content[id++]);
-//    settings.otherCol1   = Convert::to_color(content[id++]);
-//    settings.otherCol2   = Convert::to_color(content[id++]);
-
-//    femaleCol1D.setCurrentColor(settings.femaleCol1);
-//    femaleCol2D.setCurrentColor(settings.femaleCol2);
-//    maleCol1D.setCurrentColor( settings.maleCol1);
-//    maleCol2D.setCurrentColor( settings.maleCol2);
-//    bothCol1D.setCurrentColor( settings.bothCol1);
-//    bothCol2D.setCurrentColor( settings.bothCol2);
-//    otherCol1D.setCurrentColor(settings.otherCol1);
-//    otherCol2D.setCurrentColor(settings.otherCol2);
-
-//    UiUtility::fill_button_icon(ui.pbFemaleColor1, settings.femaleCol1);
-//    UiUtility::fill_button_icon(ui.pbFemaleColor2, settings.femaleCol2);
-//    UiUtility::fill_button_icon(ui.pbMaleColor1,   settings.maleCol1);
-//    UiUtility::fill_button_icon(ui.pbMaleColor2,   settings.maleCol2);
-//    UiUtility::fill_button_icon(ui.pbBothColor1,   settings.bothCol1);
-//    UiUtility::fill_button_icon(ui.pbBothColor2,   settings.bothCol2);
-//    UiUtility::fill_button_icon(ui.pbOtherColor1,  settings.otherCol1);
-//    UiUtility::fill_button_icon(ui.pbOtherColor2,  settings.otherCol2);
 
     return true;
 }

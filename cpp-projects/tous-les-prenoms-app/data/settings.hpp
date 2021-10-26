@@ -20,73 +20,73 @@ namespace tool {
 struct FilterSettings{
 
     // letters
-    bool filterLetters;
-    bool nbLetters;
-    int minLettersNb;
-    int maxLettersNb;
-    bool contains;
+    bool filterLetters = true;
+    bool nbLetters = true;
+    int minLettersNb = 3;
+    int maxLettersNb = 15;
+    bool contains = false;
     QStringList containsTextes;
-    bool startsBy;
+    bool startsBy = false;
     QStringList startsByTextes;
-    bool endsBy;
+    bool endsBy = false;
     QStringList endsByTextes;
-    bool doNoContains;
+    bool doNoContains = false;
     QStringList doNotContainsTextes;
 
     // gender
-    bool filterGender;
-    bool onlyFemale;
-    bool onlyMale;
-    bool onlyOther;
-    bool majorFemale;
-    bool majorMale;
-    bool majorOther;
-    bool femaleMale;
-    bool femaleOther;
-    bool maleOther;
+    bool filterGender = false;
+    bool onlyFemale = false;
+    bool onlyMale = false;
+    bool onlyOther = false;
+    bool majorFemale = false;
+    bool majorMale = false;
+    bool majorOther = false;
+    bool femaleMale = false;
+    bool femaleOther = false;
+    bool maleOther = false;
 
     // year
-    bool filterYear;
+    bool filterYear = false;
     // # appears
-    bool appearsBefore;
-    bool appearsAfter;
-    bool appearsDuring;
-    bool appearsUnknow;
-    int appearsYear;
+    bool appearsBefore = false;
+    bool appearsAfter = true;
+    bool appearsDuring = false;
+    bool appearsUnknow = false;
+    int appearsYear = 1900;
     // # last appears
-    bool lastAppearsBefore;
-    bool lastAppearsAfter;
-    bool lastAppearsDuring;
-    bool lastAppearsUnknow;
-    int lastAppearsYear;
+    bool lastAppearsBefore = true;
+    bool lastAppearsAfter = false;
+    bool lastAppearsDuring = false;
+    bool lastAppearsUnknow = false;
+    int lastAppearsYear = 2020;
     // # peak
-    bool peakBefore;
-    bool peakAfter;
-    bool peakDuring;
-    bool peakUnknow;
-    int peakYear;
+    bool peakBefore = false;
+    bool peakAfter = false;
+    bool peakDuring = true;
+    bool peakUnknow = false;
+    int peakYear = 1988;
 
     // period
-    bool filterPopPeriod;
-    Period period;
-    bool periodAtLeast;
-    bool periodEqual;
-    bool periodAtLast;
-    Popularity popPeriod;
+    bool filterPopPeriod  = false;
+    Period period = Period::p1900_2020;
+    bool periodAtLeast = false;
+    bool periodEqual  = true;
+    bool periodAtLast  = false;
+    Popularity popPeriod = Popularity::Huge;
 
     // departments
-    bool filterPopDep;    
+    bool filterPopDep = false;
     std::unordered_set<Department> insideDepartments;
-    bool depAtLeast;
-    bool depEqual;
-    bool depAtLast;
-    Popularity popDep;
+    bool depAtLeast = false;
+    bool depEqual = true;
+    bool depAtLast = false;
+    Popularity popDep = Popularity::Huge;
 
     // sorting
-    bool sortAZ;
-    bool sortZA;
-    bool sortPopS;
-    bool sortPopI;
+    bool sortAZ = true;
+    bool sortZA = false;
+    bool sortPopS = false;
+    bool sortPopI = false;
 };
 
 struct DisplaySettings{

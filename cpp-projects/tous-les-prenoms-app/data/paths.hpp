@@ -15,14 +15,13 @@ struct Paths{
     static void initialize_paths(){
 
         exeDirPath                  = QApplication::applicationDirPath();
-        qDebug() << "exeDirPath";
         dataDirPath                 = exeDirPath  % QSL("/data");
         settingsFilePath            = dataDirPath % QSL("/settings.config");
         csvFilePath                 = dataDirPath % QSL("/dpt2020.csv");
 
         savedNamesFilePath          = dataDirPath % QSL("/saved.txt");
         removedNamesFilePath        = dataDirPath % QSL("/removed.txt");
-        mapFilePath                 = dataDirPath % QSL("/france-departments.png");
+        mapFilePath                 = dataDirPath % QSL("/france-departments2.png");
         gradientFilePath            = dataDirPath % QSL("/color_gradient.png");
         departmentsColorsFilePath   = dataDirPath % QSL("/colors_departments.txt");
     }

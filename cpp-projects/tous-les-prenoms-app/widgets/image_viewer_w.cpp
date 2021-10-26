@@ -11,7 +11,7 @@
 using namespace tool::ui;
 
 ImageViewerW::ImageViewerW(QWidget *parent) : QWidget(parent) {
-
+    setWindowFlags(Qt::FramelessWindowHint);
 }
 
 void ImageViewerW::paintEvent(QPaintEvent *event) {
