@@ -20,17 +20,16 @@ class ListNamesM : public QAbstractListModel{
 Q_OBJECT
 public:
 
-    ListNamesM(Mode mode) : m_mode(mode){}
+    ListNamesM(Mode mode);
 
     int rowCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role= Qt::DisplayRole) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
 //    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const{
 //    return QVariant();
 //    }
-    void update(){
-        beginResetModel();
-        endResetModel();
-    }
+    void update();
+    void update2();
 
     tool::Data *nData = nullptr;
     DisplaySettings *dSettings = nullptr;
@@ -39,6 +38,9 @@ public:
 
 private:
     Mode m_mode;
+
+    // QAbstractItemModel interface
+
 };
 
 

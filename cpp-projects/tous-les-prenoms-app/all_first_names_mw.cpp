@@ -92,6 +92,13 @@ void AllFirstNamesMW::init_ui_lists(){
     filteredNamesV->setModel(filteredNamesM.get());
     filteredNamesV->viewport()->installEventFilter(this);
 
+    connect(filteredNamesV->verticalScrollBar(), &QScrollBar::valueChanged, this, [&](int value){
+
+        auto id1 = filteredNamesV->indexAt(filteredNamesV->rect().topLeft());
+        auto id2 = filteredNamesV->indexAt(filteredNamesV->rect().bottomLeft());
+        qDebug() <<"rects " << id1.row() << id2.row();
+        emit filteredNamesM->dataChanged(id1, id2);
+    });
 
     ui.vlSaved->insertWidget(0, savedNamesV = new ListView());
     savedNamesM = std::make_unique<ui::ListNamesM>(ui::Mode::Saved);
@@ -110,20 +117,13 @@ void AllFirstNamesMW::init_ui_lists(){
     removedNamesV->setModel(removedNamesM.get());
     removedNamesV->viewport()->installEventFilter(this);
 
+    QCoreApplication::processEvents();
+
     removedNamesM->update();
     savedNamesM->update();
     filteredNamesM->update();
 
-    filteredNamesM->initialized = true;
-    savedNamesM->initialized = true;
-    removedNamesM->initialized = true;
-
-
-
-//    QCoreApplication::processEvents();
-
-
-//    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
 }
 
 void AllFirstNamesMW::init_ui_filters(){
@@ -747,12 +747,17 @@ void AllFirstNamesMW::update_filtered_list(){
     Bench::start("[update_filtered_list]");
     ui.twListNames->setTabText(0, QString("Filtrés (") % QString::number(data.countFiltered) % QSL(")"));
 
-    filteredNamesV->viewport()->update();
-    filteredNamesV->verticalScrollBar()->setRange(0, data.countFiltered);
+    auto id1 = filteredNamesV->indexAt(filteredNamesV->rect().topLeft());
+    auto id2 = filteredNamesV->indexAt(filteredNamesV->rect().bottomLeft());
+    qDebug() <<"rects " << id1.row() << id2.row();
+    emit filteredNamesM->dataChanged(id1, id2);
 
-    if(filteredNamesV->currentIndex().row() > static_cast<int>(data.countFiltered)){
-        filteredNamesV->scrollToTop();
-    }
+//    filteredNamesV->viewport()->update();
+//    filteredNamesV->verticalScrollBar()->setRange(0, data.countFiltered);
+
+//    if(filteredNamesV->currentIndex().row() > static_cast<int>(data.countFiltered)){
+//        filteredNamesV->scrollToTop();
+//    }
 
     Bench::stop();
 }

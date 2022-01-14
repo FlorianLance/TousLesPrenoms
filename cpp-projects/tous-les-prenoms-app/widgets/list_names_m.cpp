@@ -8,14 +8,13 @@ using namespace tool;
 using namespace tool::ui;
 
 
+ListNamesM::ListNamesM(Mode mode) : m_mode(mode){
+}
+
 int ListNamesM::rowCount(const QModelIndex &) const{
 
     if(nData == nullptr){
         return 0;
-    }
-
-    if(!initialized){
-        return nData->namesState.size();
     }
 
     if(m_mode == Mode::Filtered){
@@ -29,7 +28,7 @@ int ListNamesM::rowCount(const QModelIndex &) const{
 
 QVariant ListNamesM::data(const QModelIndex &index, int role) const{
 
-    if (!index.isValid() || (nData == nullptr) || !initialized){
+    if (!index.isValid() || (nData == nullptr)){
         return QVariant();
     }
 
@@ -93,6 +92,22 @@ QVariant ListNamesM::data(const QModelIndex &index, int role) const{
 //    }
 
     return QVariant();
+}
+
+bool ListNamesM::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+
+    return false;
+}
+
+void ListNamesM::update(){
+    beginResetModel();
+    endResetModel();
+}
+
+void ListNamesM::update2(){
+
+    emit dataChanged(index(0),index(nData->countFiltered));
 }
 
 

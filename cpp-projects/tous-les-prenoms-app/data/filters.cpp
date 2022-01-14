@@ -478,6 +478,12 @@ void Filters::apply(const FilterSettings &s, Data &data){
 
     using namespace std;
 
+    // retrieve rows id to remove
+    // ...
+    // retrieve row id to add
+    // ...
+    // emit dataChanged(this->index(index),this->index(index));
+
     // filter
     for_each(execution::par_unseq, begin(data.iData.namesInfo), end(data.iData.namesInfo),[&](auto nameInfo){
         data.namesState[nameInfo.first].filtered = is_filtered(s, nameInfo.first, data);

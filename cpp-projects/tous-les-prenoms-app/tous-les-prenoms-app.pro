@@ -76,6 +76,7 @@ LIBS +=\
 ####################################### PROJECT FILES
 
 SOURCES += \
+    all_first_names_imgui.cpp \
     all_first_names_main.cpp \
     all_first_names_mw.cpp \
     data/data.cpp \
@@ -93,6 +94,7 @@ SOURCES += \
     widgets/map_w.cpp
 
 HEADERS += \
+    all_first_names_imgui.hpp \
     all_first_names_mw.hpp \
     data/data.hpp \
     data/filters.hpp \
